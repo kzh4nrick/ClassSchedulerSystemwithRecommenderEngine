@@ -9,5 +9,5 @@ class Curriculum extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course_id', 'yearLevel', 'subject_id', 'Units', 'lec', 'lab', 'user_id'];
+    protected $fillable = ['academicYear', 'semester', 'course_id', 'yearLevel', 'subject_id', 'Units', 'lec', 'lab', 'faculties_id', 'classrooms_id', 'user_id'];
 }

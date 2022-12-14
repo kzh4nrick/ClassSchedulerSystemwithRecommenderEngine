@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
+            $table->string('academicYear', 20);
+            $table->string('semester', 30);
             $table->foreignId('course_id')->constrained();
             $table->string('yearLevel', 50);
             $table->char('block');

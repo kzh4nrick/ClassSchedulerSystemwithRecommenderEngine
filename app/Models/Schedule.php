@@ -9,5 +9,5 @@ class Schedule extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course_id', 'yearLevel', 'block'];
+    protected $fillable = ['academicYear', 'semester', 'course_id', 'yearLevel', 'block'];
 }

@@ -15,12 +15,16 @@ return new class extends Migration
     {
         Schema::create('curricula', function (Blueprint $table) {
             $table->id();
+            $table->string('academicYear', 20);
+            $table->string('semester', 30);
             $table->foreignId('course_id')->constrained();
             $table->string('yearLevel', 50);
             $table->foreignId('subject_id')->constrained();
             $table->tinyInteger('Units');
             $table->tinyInteger('lec');
             $table->tinyInteger('lab');
+            $table->string('faculties_id', 100);
+            $table->string('classrooms_id', 100);
             $table->foreignId('user_id')->constrained();
             $table->timestamps();
         });

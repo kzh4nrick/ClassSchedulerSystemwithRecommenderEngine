@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('Subject_Code', 50)->unique();
             $table->string('Subject_Name', 200);
             $table->string('Subject_Type', 100);
-            $table->foreignId('course_id')->constrained();
+            $table->foreignId('course_id')->constrained()->nullable();
+            $table->foreignId('department_id')->constrained();
             $table->timestamps();
         });
     }
