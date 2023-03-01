@@ -424,7 +424,7 @@ Route::get("/subjects/GEC/college/{id}", function ($id) {
 Route::post('/subjects/create', function (Request $request) {
     $data = $request->all();
 
-    if(!Subject::where('Subject_Code','=', $data['Subject_Code'])->exists()) {
+    if((!Subject::where('Subject_Code','=', $data['Subject_Code'])->exists())) {
 
         $subject = Subject::create([
             "Subject_Code" => $data["Subject_Code"],
@@ -2806,7 +2806,7 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
             $labb = $labHours / $split_lab[$i];
 
             if($labb % $split_lab[$i] == 0){
-                $endTime = strtotime("+$abb hour", strtotime($startTime));
+                $endTime = strtotime("+$labb hour", strtotime($startTime));
                 $endTime = date('H:i', $endTime);
             } else {
                 $hrs = floor($labb);
@@ -2828,7 +2828,7 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                 $startTime = $startTimeA;
                 $maxTime = "20:00";
             }
-            $endTime = strtotime("+$lecc hour", strtotime($startTime));
+            $endTime = strtotime("+$labb hour", strtotime($startTime));
             $endTime = date('H:i', $endTime);
         }
         while($labHours > 0){
@@ -2929,7 +2929,7 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                     $add = 60 - $add;
                                     $startTime = strtotime("+$add minutes", strtotime($startTime));
                                     $startTime = date('H:i', $startTime);
-                                    $endTime = strtotime("+$lecc2 hour", strtotime($startTime));
+                                    $endTime = strtotime("+$labb2 hour", strtotime($startTime));
                                     $endTime = date('H:i', $endTime);
                                 }
                                 if($labHours <= 0)
