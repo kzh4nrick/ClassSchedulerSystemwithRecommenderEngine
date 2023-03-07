@@ -1170,11 +1170,11 @@
                                 </div>
                             </div>
                             <div class="col-span-12 grid grid-cols-12 my-2">
-                                <div class="col-span-3 flex justify-center items-center border-r">
+                                <div class="col-span-2 flex justify-center items-center border-r">
                                     <label
                                         for="subject"
                                         class="uppercase text-base font-mono font-semibold text-gray-700"
-                                        >Subject
+                                        >Course
                                     </label>
                                 </div>
                                 <div class="col-span-2 flex justify-center items-center border-l border-r">
@@ -1205,16 +1205,32 @@
                                         >Faculty
                                     </label>
                                 </div>
-                                <div class="col-span-2 flex justify-center items-center border-l">
+                                <div class="col-span-3 flex flex-col justify-center border-l">
                                     <label
                                         for="classroom"
-                                        class="uppercase text-base font-mono font-semibold text-gray-700"
+                                        class="uppercase text-base text-center font-mono font-semibold text-gray-700"
                                         >Classroom
                                     </label>
+                                    <div class="flex justify-around">
+                                        <div>
+                                            <label
+                                                for="Lec"
+                                                class="uppercase text-base font-mono font-semibold text-gray-700"
+                                                >Lecture
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label
+                                                for="Lab"
+                                                class="uppercase text-base font-mono font-semibold text-gray-700"
+                                                >Laboratory
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-span-12 grid grid-cols-12 flex items-center border-t-2" v-for="(item, index) in preferredSchedule" :key="index">
-                                <div class="col-span-3 pr-1 border-r">
+                                <div class="col-span-2 pr-1 border-r">
                                     <span type="text" class="mt-1 block w-full py-2 px-3 border-2 border-gray-500 bg-white font-semibold rounded-md shadow-sm focus:outline-none sm:text-sm">
                                     {{ "[ " + item.Subject_Code + " ] " + item.Subject_Name }}
                                     </span>
@@ -1292,21 +1308,53 @@
                                         </option>
                                     </select>
                                 </div>
-                                <div class="col-span-2 pl-1 border-l">
-                                    <select
-                                        v-model="item.c_id"
-                                        required
-                                        class="mt-1 block w-full py-2 px-3 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 border-2 border-sky-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
-                                    >
-                                        <option disabled class="text-center" value="">Select a Classroom</option>
-                                        <option v-for="lists in item.classroom_id"
-                                                v-bind="lists.id"
-                                                :value="lists.id"
-                                                class="text-sky-600 text-justify"
-                                                >
-                                                {{ lists.Building_No + " - " + lists.Classroom_No + " [ " + lists.Classroom_Type + " ]" }}
-                                        </option>
-                                    </select>
+                                <div class="col-span-3 flex flex-row pl-1 border-l gap-x-1">
+                                    <div>
+                                        <select
+                                            v-model="item.c_id_lec"
+                                            required
+                                            class="mt-1 block w-full py-2 px-3 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 border-2 border-sky-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+                                        >
+                                            <option disabled class="text-center" value="">Select a Classroom</option>
+                                            <option v-for="lists in item.classroom_id_lec"
+                                                    v-bind="lists.id"
+                                                    :value="lists.id"
+                                                    class="text-sky-600 text-justify"
+                                                    >
+                                                    {{ lists.Building_No + " - " + lists.Classroom_No + " [ " + lists.Classroom_Type + " ]" }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select
+                                            v-if="item.lab > 0"
+                                            v-model="item.c_id_lab"
+                                            required
+                                            class="mt-1 block w-full py-2 px-3 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 border-2 border-sky-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+                                        >
+                                            <option disabled class="text-center" value="">Select a Classroom</option>
+                                            <option v-for="lists in item.classroom_id_lab"
+                                                    v-bind="lists.id"
+                                                    :value="lists.id"
+                                                    class="text-sky-600 text-justify"
+                                                    >
+                                                    {{ lists.Building_No + " - " + lists.Classroom_No + " [ " + lists.Classroom_Type + " ]" }}
+                                            </option>
+                                        </select>
+                                        <select
+                                            v-else
+                                            disabled
+                                            class="cursor-not-allowed mt-1 block w-full py-2 px-3 border-2 border-orange-600 bg-white rounded-md shadow-sm sm:text-sm"
+                                        >
+                                            <option disabled class="text-center" value="">Select a Classroom</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-span-6 flex justify-center">
+                                    <span class="font-medium text-xs text-red-500">{{ item.lecerror }}</span>
+                                </div>
+                                <div class="col-span-6 flex justify-center">
+                                    <span class="font-medium text-xs text-red-500">{{ item.laberror }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1760,7 +1808,8 @@ export default {
         const chooseStartTimeA = ref(null);
 
         const onefaculty = ref({});
-        const oneclassroom = ref({});
+        const oneclassroom_lec = ref({});
+        const oneclassroom_lab = ref({});
 
         const sched = ref(false);
         let tempSchedule = ref([]);
@@ -2095,9 +2144,13 @@ export default {
                                                 prefDays: [],
                                                 time_period: '',
                                                 faculty_id: {},
-                                                classroom_id: {},
+                                                classroom_id_lec: {},
+                                                classroom_id_lab: {},
                                                 f_id: '',
-                                                c_id: ''
+                                                c_id_lec: '',
+                                                c_id_lab: '',
+                                                lecerror: '',
+                                                laberror: '',
                                             };
             }
 
@@ -2119,9 +2172,21 @@ export default {
                     return properties;
                 });
             
-                oneclassroom.value = await APIController.FetchClassroomCurriculum(curriculumListNotSave.value[i].classrooms_id);
+                oneclassroom_lec.value = await APIController.FetchClassroomCurriculum(curriculumListNotSave.value[i].classrooms_id);
 
-                preferredSchedule.value[i].classroom_id = oneclassroom.value.map(function (element){
+                preferredSchedule.value[i].classroom_id_lec = oneclassroom_lec.value.map(function (element){
+                    let properties = {
+                        "id": element.id,
+                        "Building_No": element.Building_No,
+                        "Classroom_No": element.Classroom_No,
+                        "Classroom_Type": element.Classroom_Type
+                    };
+                    return properties;
+                });
+
+                oneclassroom_lab.value = await APIController.FetchClassroomCurriculumLab(curriculumListNotSave.value[i].classrooms_id);
+
+                preferredSchedule.value[i].classroom_id_lab = oneclassroom_lab.value.map(function (element){
                     let properties = {
                         "id": element.id,
                         "Building_No": element.Building_No,
@@ -2197,8 +2262,11 @@ export default {
             const faculties = preferredSchedule.value.map(function (element) {
                 return element.f_id;
             });
-            const classrooms = preferredSchedule.value.map(function (element) {
-                return element.c_id;
+            const classrooms_lec = preferredSchedule.value.map(function (element) {
+                return element.c_id_lec;
+            });
+            const classrooms_lab = preferredSchedule.value.map(function (element) {
+                return element.c_id_lab;
             });
             // const prefDayss = JSON.stringify(prefDays);
             let alertPD = false;
@@ -2215,12 +2283,20 @@ export default {
             else if(alertTP)
                 alert("Please select a Time Period on each row.");
             else {
-                                              console.log(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms), parseInt(localStorage.getItem('userID')));
-                await APIController.GenerateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms), parseInt(localStorage.getItem('userID')));
-                fetchClassSchedules();
-                toggleModal();
-                fetchCurriculaStatus();
-                resetPref();
+                                              console.log(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms_lec), JSON.stringify(classrooms_lab), parseInt(localStorage.getItem('userID')));
+                let gensched = await APIController.GenerateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms_lec), JSON.stringify(classrooms_lab), parseInt(localStorage.getItem('userID')));
+                if(gensched){
+                    for(let i = 0; i < gensched.value.length; i++){
+                        preferredSchedule.value[i].lecerror = gensched.value[i].lecerror;
+                        preferredSchedule.value[i].laberror = gensched.value[i].laberror;
+                    }
+                } else {
+                    fetchClassSchedules();
+                    toggleModal();
+                    fetchCurriculaStatus();
+                    resetPref();
+                }
+                
             }
         }
 
@@ -2237,10 +2313,8 @@ export default {
                 alert("Time range must be atleast within an hour.");
             else if((model2.value.StartTime <= '12:00' && model2.value.EndTime >= '13:00') || (model2.value.StartTime <= '12:00' && model2.value.EndTime <= '13:00' && model2.value.EndTime > '12:00') || (model2.value.StartTime >= '12:00' && model2.value.StartTime < '13:00' && model2.value.EndTime >= '13:00'))
                 alert("A Schedule cannot be save within the Lunch Time Period.");
-            // console.log(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, model2.value.Day, model2.value.StartTime, model2.value.EndTime, model2.value.Subject, model2.value.Faculty, model2.value.Classroom, localStorage.getItem('userID'));
             else{
                 let tempClassSchedule = await APIController.CreateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, model2.value.Day, model2.value.StartTime, model2.value.EndTime, model2.value.Subject, model2.value.Faculty, model2.value.Classroom, localStorage.getItem('userID'));
-                // console.log("saasfs"+tempClassSchedule.day);
                 if(tempClassSchedule){
                     fetchClassSchedules(),
                     fetchCurriculaStatus();
@@ -2261,7 +2335,6 @@ export default {
                     classInfo.value.labU = classInfo.value.labU + e.lab;
                 });
             }
-            
 
             eventsREG.value = classscheduleListREG.value.map(function (element){
                 let properties = {
@@ -2270,9 +2343,6 @@ export default {
                     "title": element.Subject_Name,
                     "content": element.Faculty_Name+"<br>"+element.Building_No+" "+element.Classroom_No,
                     "class": "faculty",
-                    // "s_id": element.subject_id,
-                    // "id": element.id,
-                    // "userID": element.user_id
                 };
                 return properties;
             });
@@ -2298,9 +2368,6 @@ export default {
                     "title": element.Subject_Name,
                     "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" || "+element.Building_No+" "+element.Classroom_No+"<br>[ Lec: "+element.lec+" - Lab: "+element.lab+" ]",
                     "class": "faculty",
-                    // "s_id": element.subject_id,
-                    // "id": element.id,
-                    // "userID": element.user_id
                 };
                 return properties;
             });
@@ -2325,9 +2392,6 @@ export default {
                     "title": element.Subject_Name,
                     "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" [ Lec: "+element.lec+" - Lab: "+element.lab+" ] <br>"+element.Faculty_Name,
                     "class": "classroom",
-                    // "s_id": element.subject_id,
-                    // "id": element.id,
-                    // "userID": element.user_id
                 };
                 return properties;
             });
@@ -2753,7 +2817,8 @@ export default {
             preferredDays,
             preferredSchedule,
             onefaculty,
-            oneclassroom,
+            oneclassroom_lec,
+            oneclassroom_lab,
             showModalAdd,
             toggleModalAdd,
             toggleModalUpdate,

@@ -952,6 +952,22 @@ export default {
             });
         }
     },
+    FetchClassroomCurriculumLab: id => {
+        if (id != null) {
+            return fetch(API_BASE + "/classrooms-curriculum/" + id + "/lab")
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    return data.response.classroom;
+                } else {
+                    throw data.response.error;
+                }
+            })
+            .catch(err => {
+                alert(err)
+            });
+        }
+    },
     FetchClassroomsBySubject: (AY, sem, id) => {
         if (id != null) {
             return fetch(API_BASE + "/classrooms-subject/" + AY + "/" + sem + "/" + id)
@@ -1564,7 +1580,7 @@ export default {
             alert(err);
         });
     },
-    GenerateClassSchedule: (AY = "", sem = "", schedule_id = "", StartTimeM = "", StartTimeA = "", subjects = "", lec = "", lab = "", split_lec = "", split_lab = "", prefDays = "", time_period = "", faculties = "", classrooms = "", user_id = "") => {
+    GenerateClassSchedule: (AY = "", sem = "", schedule_id = "", StartTimeM = "", StartTimeA = "", subjects = "", lec = "", lab = "", split_lec = "", split_lab = "", prefDays = "", time_period = "", faculties = "", classrooms_lec = "", classrooms_lab = "", user_id = "") => {
         if (
             AY == "" ||
             sem == "" ||
@@ -1578,7 +1594,8 @@ export default {
             prefDays == "" ||
             time_period == "" ||
             faculties == "" ||
-            classrooms == "" ||
+            classrooms_lec == "" ||
+            classrooms_lab == "" ||
             user_id == ""
         ) {
             return false;
@@ -1589,7 +1606,7 @@ export default {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ schedule_id, StartTimeM, StartTimeA, subjects, lec, lab, split_lec, split_lab, prefDays, time_period, faculties, classrooms, user_id })
+            body: JSON.stringify({ schedule_id, StartTimeM, StartTimeA, subjects, lec, lab, split_lec, split_lab, prefDays, time_period, faculties, classrooms_lec, classrooms_lab, user_id })
         })
         // .then(async response => {
         //     try {
@@ -1600,18 +1617,17 @@ export default {
         //      console.error(error)
         //    }
         //   })
-        // .then(response => response.json())
-        // .then(data => {
-        //     if (data.success) {
-        //         alert("New Class Schedule has been saved.");
-        //         return data.response.classschedule;
-        //     } else {
-        //         throw data.response.error;
-        //     }
-        // })
-        // .catch(err => {
-        //     alert(err);
-        // });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Generating of Schedules completed.");
+            } else {
+                return data.response.scheduleserror;
+            }
+        })
+        .catch(err => {
+            alert(err);
+        });
     },
     FetchClassSchedulesMergingMajor: (s_id, c_id, yL, id) => {
         if (id != null) {

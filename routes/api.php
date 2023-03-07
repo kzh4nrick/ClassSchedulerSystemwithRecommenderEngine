@@ -1320,6 +1320,29 @@ Route::get("/classrooms-curriculum/{id}", function ($id) {
     ];
 });
 
+//GET CLASSROOMS [LABORATORY] IN CURRICULUM
+Route::get("/classrooms-curriculum/{id}/lab", function ($id) {
+    $id = json_decode($id, true);
+
+    $classroom = Classroom::whereIn('id', $id)->where('Classroom_Type', 'Laboratory')->get();
+
+    if (empty($classroom)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No record for Classroom found."
+            ]
+        ];
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "classroom" => $classroom
+        ]
+    ];
+});
+
 //GET CLASSROOMS BY SUBJECT
 Route::get("/classrooms-subject/{AY}/{sem}/{id}", function ($AY, $sem, $id) {
     $curricula = DB::table('curricula')
@@ -2470,18 +2493,35 @@ Route::post('/classschedules/create/{AY}/{sem}', function (Request $request, $AY
 });
 
 Route::get("/curricula/zxc", function (Request $request) {
-    $json_string = '["2"]';
-    // $json_array = json_decode($json_string);
-    $pdays = json_decode($json_string,true);
-    for($i=0; $i<count($pdays); $i++)
-        $pd[$i] = explode(",",$pdays[$i]);
-    for($i = 0; $i < count($pd); $i++){
-        for($j = 0; $j < count($pd[$i]); $j++)
-            $pd[$i][$j] = (int)$pd[$i][$j];
-        sort($pd[$i]);
-    }
+    // $json_string = '["2","3"]';
+    // // $json_array = json_decode($json_string);
+    // $pdays = json_decode($json_string,true);
+    // for($i=0; $i<count($pdays); $i++)
+    //     $pd[$i] = explode(",",$pdays[$i]);
+    // for($i = 0; $i < count($pd); $i++){
+    //     for($j = 0; $j < count($pd[$i]); $j++)
+    //         $pd[$i][$j] = (int)$pd[$i][$j];
+    //     sort($pd[$i]);
+    // }
 
-    dump($pd);
+    // $temp = $pd[1];
+    // print_r($pd);
+
+    $myArray = [];
+
+array_push($myArray, (object)[
+        'key1' => 'someValue',
+        'key2' => 'someValue2',
+        'key3' => 'someValue3',
+]);
+array_push($myArray, (object)[
+    'key1' => 'someValue',
+    'key2' => 'someValue2',
+    'key3' => 'someValue3',
+]);
+// return $myArray[0]->key1;
+
+
 });
 
 //GENERATE SCHEDULES FOR A CLASS
@@ -2502,7 +2542,8 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
     //     $tpp = str_ireplace( array('\'', '"'), '', $tp);
     // $time_period = explode(",",$tpp);
     $faculties = json_decode($data['faculties'], true);
-    $classrooms = json_decode($data['classrooms'], true);
+    $classrooms_lec = json_decode($data['classrooms_lec'], true);
+    $classrooms_lab = json_decode($data['classrooms_lab'], true);
 
     //prefDays convert to array of numbers and sort in ascending
     for($i=0; $i<count($pdays); $i++)
@@ -2541,18 +2582,38 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
     // for($i = 0; $i < count($time_period); $i++)
     //     $time_period[$i] = trim($time_period[$i]);
 
+    $classschedules_ = [];
+
+    class SchedulesErrors
+    {
+        public $lecerror;
+        public $laberror;
+    }
+    $classschederrors_ = array();
+
     for($i = 0; $i < count($subjects); $i++){
         $d = 0;
-        $notYet = false;
-        $notYetLab = false;
+
+        $temp_pd = $pd[$i];
+
+        $notYet = "first";
+        $notYetTime = "first";
+        $NONE = false;
+        $notYetLab = "first";
+        $notYetTimeLab = "first";
+        $NONELAB = false;
 
         if($time_period[$i] == "Morning"){
             $startTime = $startTimeM;
+            $startTimeMLec = $startTimeM;
+            $startTimeMLab = $startTimeM;
             $maxTime = "12:00";
         }
         else if($time_period[$i] == "Afternoon"){
             $startTime = $startTimeA;
-            $maxTime = "20:00";
+            $startTimeALec = $startTimeA;
+            $startTimeALab = $startTimeA;
+            $maxTime = "21:00";
         }
 
         $lecHours = $lec[$i];
@@ -2570,116 +2631,184 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                 $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
                 $endTime = date('H:i', $endTime);
             }
+
+            if ($endTime > $maxTime){
+                $maxT = strtotime($maxTime);
+                $maxTH = date("H", $maxT);//maxTime hours
+                $maxTH = 60 * $maxTH;
+                $maxTM = date("i", $maxT);//maxTime minutes
+                $maxTotM = $maxTH + $maxTM;//maxTime in minutes
+                $endT = strtotime($endTime);
+                $endTH = date("H", $endT);//endTime hours
+                $endTH = 60 * $endTH;
+                $endTM = date("i", $endT);//endTime minutes
+                $endTotM = $endTH + $endTM;
+                $diffME = $endTotM - $maxTotM;
+                $endTime = date("H:i",strtotime("-$diffME minutes",strtotime($endTime)));
+                $startTime = date("H:i",strtotime("-$diffME minutes",strtotime($startTime)));
+    
+                if($time_period[$i] == "Morning"){
+                    if($lecc >= 6 && $lecc <= 8){
+                        $startTime = "13:00";
+                        $time_period[$i] = "Afternoon";
+                        $startTimeALec = "13:00";
+                        $endTime = date('H:i', strtotime("+$lecc hour", strtotime($startTime)));
+                        $maxTime = "21:00";
+                    }
+                    else if($lecc > 8){
+                        $lecc = $lecc / 2;
+                        if($lecc <= 5){
+                            $hrs = floor($lecc);
+                            $mins = ($lecc - $hrs) * 60;
+                            $startTime = "07:00";
+                            $time_period[$i] = "Morning";
+                            $startTimeMLec = "07:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "12:00";
+                        } else {
+                            $hrs = floor($lecc);
+                            $mins = ($lecc - $hrs) * 60;
+                            $startTime = "13:00";
+                            $time_period[$i] = "Afternoon";
+                            $startTimeALec = "13:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "21:00";
+                        }
+                    }
+                }
+                else if($time_period[$i] == "Afternoon"){
+                    if($lecc > 8){
+                        $lecc = $lecc / 2;
+                        if($lecc <= 5){
+                            $hrs = floor($lecc);
+                            $mins = ($lecc - $hrs) * 60;
+                            $startTime = "07:00";
+                            $time_period[$i] = "Morning";
+                            $startTimeMLec = "07:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "12:00";
+                        } else {
+                            $hrs = floor($lecc);
+                            $mins = ($lecc - $hrs) * 60;
+                            $startTime = "13:00";
+                            $time_period[$i] = "Afternoon";
+                            $startTimeALec = "13:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "21:00";
+                        }
+                    }
+                    
+                }
+            }
         }
+        
         $noConflict = null;
         while($lecHours > 0){
             while($d < count($pd[$i])){
                 // if($DB_Days == $pd[$i][$d]){
-                    if ($endTime > $maxTime){
-                        $maxT = strtotime($maxTime);
-                        $maxTH = date("H", $maxT);//maxTime hours
-                        $maxTH = 60 * $maxTH;
-                        $maxTM = date("i", $maxT);//maxTime minutes
-                        $maxTotM = $maxTH + $maxTM;//maxTime in minutes
-                        $endT = strtotime($endTime);
-                        $endTH = date("H", $endT);//endTime hours
-                        $endTH = 60 * $endTH;
-                        $endTM = date("i", $endT);//endTime minutes
-                        $endTotM = $endTH + $endTM;
-                        $diffME = $endTotM - $maxTotM;
-                        $endTime = date("H:i",strtotime("-$diffME minutes",strtotime($endTime)));
-                        $startTime = date("H:i",strtotime("-$diffME minutes",strtotime($startTime)));
+                    // if ($endTime > $maxTime){
+                    //     $maxT = strtotime($maxTime);
+                    //     $maxTH = date("H", $maxT);//maxTime hours
+                    //     $maxTH = 60 * $maxTH;
+                    //     $maxTM = date("i", $maxT);//maxTime minutes
+                    //     $maxTotM = $maxTH + $maxTM;//maxTime in minutes
+                    //     $endT = strtotime($endTime);
+                    //     $endTH = date("H", $endT);//endTime hours
+                    //     $endTH = 60 * $endTH;
+                    //     $endTM = date("i", $endT);//endTime minutes
+                    //     $endTotM = $endTH + $endTM;
+                    //     $diffME = $endTotM - $maxTotM;
+                    //     $endTime = date("H:i",strtotime("-$diffME minutes",strtotime($endTime)));
+                    //     $startTime = date("H:i",strtotime("-$diffME minutes",strtotime($startTime)));
                             
-                        if($time_period[$i] == "Morning"){
-                            if(startTime < "07:00"){
-                                $startTime = "13:00";
-                                $endTime = date('H:i', strtotime("+$lecc hour", strtotime($startTime)));
-                                $maxTime = "20:00";
-                            }
-                        }
-                        else if($time_period[$i] == "Afternoon"){
-                            $lecc2 = $lecc / 2;
-                            $hrs = floor($lecc2);
-                            $mins = ($lecc2 - $hrs) * 60;
-                            $startTime = "07:00";
-                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
-                            $maxTime = "12:00";
-                            while($endTime <= $maxTime){
-                                foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
-                                                    ->where('schedules.academicYear', $AY)
-                                                    ->where('schedules.semester', $sem)
-                                                    ->cursor() as $schedule)
-                                {
-                                    if( ($schedule['day'] == $pd[$i][$d]) AND
-                                        ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
-                                            date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
+                    //     if($time_period[$i] == "Morning"){
+                    //         if(startTime < "07:00"){
+                    //             $startTime = "13:00";
+                    //             $endTime = date('H:i', strtotime("+$lecc hour", strtotime($startTime)));
+                    //             $maxTime = "20:00";
+                    //         }
+                    //     }
+                    //     else if($time_period[$i] == "Afternoon"){
+                    //         $lecc2 = $lecc / 2;
+                    //         $hrs = floor($lecc2);
+                    //         $mins = ($lecc2 - $hrs) * 60;
+                    //         $startTime = "07:00";
+                    //         $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                    //         $maxTime = "12:00";
+                    //         while($endTime <= $maxTime){
+                    //             foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+                    //                                 ->where('schedules.academicYear', $AY)
+                    //                                 ->where('schedules.semester', $sem)
+                    //                                 ->cursor() as $schedule)
+                    //             {
+                    //                 if( ($schedule['day'] == $pd[$i][$d]) AND
+                    //                     ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
+                    //                         date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
 
-                                            ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
-                                            date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
-                                            date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
+                    //                         ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
+                    //                         date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
+                    //                         date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
 
-                                            ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
-                                            date('H:i', strtotime($schedule['endTime'])) > $startTime AND
-                                            date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
-                                    )
-                                    {   
-                                        if(($schedule['faculty_id'] == $faculties[$i])) {
-                                            $noConflict=true;
-                                            break;
-                                        }
-                                        else if(($schedule['classroom_id'] == $classrooms[$i])) {
-                                            $noConflict=true;
-                                            break;
-                                        }
-                                        else if(($schedule['schedule_id'] == $data['schedule_id']) AND
-                                            ($schedule['faculty_id'] != $faculties[$i]) AND
-                                            ($schedule['classroom_id'] != $classrooms[$i])){
-                                            $noConflict=true;
-                                            break;
-                                        }
-                                        else {
-                                            $noConflict=false;
-                                        }                            
-                                    } else{
-                                        $noConflict=false;
-                                    }
-                                }
-                                if($noConflict == false)
-                                {
-                                    $classschedule = ClassSchedule::create([
-                                        "schedule_id" => $data["schedule_id"],
-                                        "day" => $pd[$i][$d],
-                                        "startTime" => $startTime,
-                                        "endTime" => $endTime,
-                                        "subject_id" => $subjects[$i],
-                                        "faculty_id" => $faculties[$i],
-                                        "classroom_id" => $classrooms[$i],
-                                        "user_id" => $data["user_id"]
-                                    ]);
-    
-                                    //save this record
-                                    $lecHours = $lecHours - $lecc2;
-                                    $startTime = "13:00";
-                                    $endTime = date('H:i', strtotime("+$lecc2 hour", strtotime($startTime)));
-                                    $maxTime = "20:00";
-                                }
-                                // if(!(($DB_StartTime <= $startTime && $DB_EndTime > $startTime) || ($DB_StartTime < $endTime && $DB_EndTime >= $endTime)))
-                                else{
-                                    //add startTime and endTime
-                                    $add = strtotime($startTime);
-                                    $add = date("i", $add);
-                                    $add = 60 - $add;
-                                    $startTime = strtotime("+$add minutes", strtotime($startTime));
-                                    $startTime = date('H:i', $startTime);
-                                    $endTime = strtotime("+$lecc2 hour", strtotime($startTime));
-                                    $endTime = date('H:i', $endTime);
-                                }
-                                if($lecHours <= 0)
-                                    break;
-                            }
-                        }
-                    }
-                    else{
+                    //                         ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
+                    //                         date('H:i', strtotime($schedule['endTime'])) > $startTime AND
+                    //                         date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
+                    //                 )
+                    //                 {   
+                    //                     if(($schedule['faculty_id'] == $faculties[$i])) {
+                    //                         $noConflict=true;
+                    //                         break;
+                    //                     }
+                    //                     else if(($schedule['classroom_id'] == $classrooms[$i])) {
+                    //                         $noConflict=true;
+                    //                         break;
+                    //                     }
+                    //                     else if(($schedule['schedule_id'] == $data['schedule_id']) AND
+                    //                         ($schedule['faculty_id'] != $faculties[$i]) AND
+                    //                         ($schedule['classroom_id'] != $classrooms[$i])){
+                    //                         $noConflict=true;
+                    //                         break;
+                    //                     }
+                    //                     else {
+                    //                         $noConflict=false;
+                    //                     }                            
+                    //                 } else{
+                    //                     $noConflict=false;
+                    //                 }
+                    //             }
+                    //             if($noConflict == false)
+                    //             {
+                    //                 $classschedule = ClassSchedule::create([
+                    //                     "schedule_id" => $data["schedule_id"],
+                    //                     "day" => $pd[$i][$d],
+                    //                     "startTime" => $startTime,
+                    //                     "endTime" => $endTime,
+                    //                     "subject_id" => $subjects[$i],
+                    //                     "faculty_id" => $faculties[$i],
+                    //                     "classroom_id" => $classrooms[$i],
+                    //                     "user_id" => $data["user_id"]
+                    //                 ]);
+                    //                 $lecHours = $lecHours - $lecc2;
+                    //                 $startTime = "13:00";
+                    //                 $endTime = date('H:i', strtotime("+$lecc2 hour", strtotime($startTime)));
+                    //                 $maxTime = "20:00";
+                    //             }
+                    //             // if(!(($DB_StartTime <= $startTime && $DB_EndTime > $startTime) || ($DB_StartTime < $endTime && $DB_EndTime >= $endTime)))
+                    //             else{
+                    //                 //add startTime and endTime
+                    //                 $add = strtotime($startTime);
+                    //                 $add = date("i", $add);
+                    //                 $add = 60 - $add;
+                    //                 $startTime = strtotime("+$add minutes", strtotime($startTime));
+                    //                 $startTime = date('H:i', $startTime);
+                    //                 $endTime = strtotime("+$lecc2 hour", strtotime($startTime));
+                    //                 $endTime = date('H:i', $endTime);
+                    //             }
+                    //             if($lecHours <= 0)
+                    //                 break;
+                    //         }
+                    //     }
+                    // }
+                    // else{
                         while($endTime <= $maxTime){
                             foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
                                                 ->where('schedules.academicYear', $AY)
@@ -2703,13 +2832,13 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                         $noConflict=true;
                                         break;
                                     }
-                                    else if(($schedule['classroom_id'] == $classrooms[$i])) {
+                                    else if(($schedule['classroom_id'] == $classrooms_lec[$i])) {
                                         $noConflict=true;
                                         break;
                                     }
                                     else if(($schedule['schedule_id'] == $data['schedule_id']) AND
                                         ($schedule['faculty_id'] != $faculties[$i]) AND
-                                        ($schedule['classroom_id'] != $classrooms[$i])){
+                                        ($schedule['classroom_id'] != $classrooms_lec[$i])){
                                         $noConflict=true;
                                         break;
                                     }
@@ -2722,15 +2851,26 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                             }
                             if($noConflict == false)
                             {
-                                $classschedule = ClassSchedule::create([
-                                    "schedule_id" => $data["schedule_id"],
-                                    "day" => $pd[$i][$d],
-                                    "startTime" => $startTime,
-                                    "endTime" => $endTime,
-                                    "subject_id" => $subjects[$i],
-                                    "faculty_id" => $faculties[$i],
-                                    "classroom_id" => $classrooms[$i],
-                                    "user_id" => $data["user_id"]
+                                // $classschedule = ClassSchedule::create([
+                                //     "schedule_id" => $data["schedule_id"],
+                                //     "day" => $pd[$i][$d],
+                                //     "startTime" => $startTime,
+                                //     "endTime" => $endTime,
+                                //     "subject_id" => $subjects[$i],
+                                //     "faculty_id" => $faculties[$i],
+                                //     "classroom_id" => $classrooms[$i],
+                                //     "user_id" => $data["user_id"]
+                                // ]);
+
+                                array_push($classschedules_, (object)[
+                                    'schedule_id' => $data["schedule_id"],
+                                    'day' => $pd[$i][$d],
+                                    'startTime' => $startTime,
+                                    'endTime' => $endTime,
+                                    'subject_id' => $subjects[$i],
+                                    'faculty_id' => $faculties[$i],
+                                    'classroom_id' => $classrooms_lec[$i],
+                                    'user_id' => $data["user_id"],
                                 ]);
 
                                 $lecHours = $lecHours - $lecc;
@@ -2741,7 +2881,12 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                 //add startTime and endTime
                                 $add = strtotime($startTime);
                                 $add = date("i", $add);
+                                if($add >= 30)
                                 $add = 60 - $add;
+                                else
+                                $add = 30 - $add;
+                                if($add == 60)
+                                $add = 30;
                                 $startTime = strtotime("+$add minutes", strtotime($startTime));
                                 $startTime = date('H:i', $startTime);
                                 $endTime = strtotime("+$lecc hour", strtotime($startTime));
@@ -2749,53 +2894,138 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                             }
                         }
                         //reset startTime, then add $d
-                        if ($endTime > $maxTime){
-                            if($time_period[$i] == "Morning"){
-                                $startTime = $startTimeM;
-                                $maxTime = "12:00";
-                            }
-                            else if($time_period[$i] == "Afternoon"){
-                                $startTime = $startTimeA;
-                                $maxTime = "20:00";
-                            }
-                            $endTime = strtotime("+$lecc hour", strtotime($startTime));
-                            $endTime = date('H:i', $endTime);
-                        }
-                    }
+                        
+                    // }
                 // }
                 if ($lecHours <= 0){
                     $d++;
+                    if($d == count($pd[$i])){
+                        $d=0;
+                        $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05"];
+                        $pd[$i] = \array_diff($new_pd, $pd[$i]);
+                        $pd[$i] = array_values($pd[$i]);
+                    }
                     break;
                 }
-                    
                 else{
                     $d++;
+                    if($NONE == true && $notYet == "fourth"){
+                        $lecHours = 0;
+                        $d = 0;
+                        $pd[$i] = $temp_pd;
+
+                        $classschederrors_[$i] = new SchedulesErrors();
+                        $classschederrors_[$i]->lecerror = "Unable to find available schedule for the Lecture Session. Please try to change the Faculty or Classroom.";
+                        
+                        if($time_period[$i] == "Morning"){
+                            $startTime = $startTimeM;
+                            $maxTime = "12:00";
+                        }
+                        else if($time_period[$i] == "Afternoon"){
+                            $startTime = $startTimeA;
+                            $maxTime = "21:00";
+                        }
+                        break;
+                    } else {
                     if($d == count($pd[$i])){
-                        if($notYet == false){
-                            $notYet = true;
+                        if($notYet == "first"){
+                            $d = 0;
                             if($time_period[$i] == "Morning"){
-                                $startTime = "13:00";
-                                $maxTime = "20:00";
-                                $endTime = strtotime("+$lecc hour", strtotime($startTime));
-                                $endTime = date('H:i', $endTime);
-                                $d=0;
+                                $time_period[$i] = "Afternoon";
                             }
                             else if($time_period[$i] == "Afternoon"){
-                                $startTime = "07:00";
-                                $maxTime = "12:00";
-                                $endTime = strtotime("+$lecc hour", strtotime($startTime));
-                                $endTime = date('H:i', $endTime);
-                                $d=0;
+                                $time_period[$i] = "Morning";
                             }
-                        } else if($notYet == true){
+                            $notYet = "second";
+                            $notYetTime = "first";
+                        }
+                        else if($notYet == "second"){
                             $d = 0;
-                            $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05", 5 => "2022-08-06"];
+                            if($time_period[$i] == "Morning"){
+                                $time_period[$i] = "Afternoon";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $time_period[$i] = "Morning";
+                            }
+                            $notYetTime = "second";
+                            $notYet = "third";
+                        }
+                        else if($notYet == "third"){
+                            $d = 0;
+                            if($time_period[$i] == "Morning"){
+                                $time_period[$i] = "Afternoon";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $time_period[$i] = "Morning";
+                            }
+                            $notYetTime = "second";
+                            $notYet = "fourth";
+                        }
+                        else if($notYet == "fourth"){
+                            $d = 0;
+                            $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05"];
                             $pd[$i] = \array_diff($new_pd, $pd[$i]);
                             $pd[$i] = array_values($pd[$i]);
-                            $notYet = null;
-                        } else{
-                            break;
+                            if($time_period[$i] == "Morning"){
+                                $time_period[$i] = "Afternoon";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $time_period[$i] = "Morning";
+                            }
+                            $notYetTime = "first";
+                            $notYet = "first";
+                            $NONE = true;
                         }
+                        // if($notYet == false){
+                        //     $notYet = true;
+                        //     if($time_period[$i] == "Morning"){
+                        //         $startTime = "13:00";
+                        //         $maxTime = "20:00";
+                        //         $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                        //         $endTime = date('H:i', $endTime);
+                        //         $d=0;
+                        //     }
+                        //     else if($time_period[$i] == "Afternoon"){
+                        //         $startTime = "07:00";
+                        //         $maxTime = "12:00";
+                        //         $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                        //         $endTime = date('H:i', $endTime);
+                        //         $d=0;
+                        //     }
+                        // } else if($notYet == true){
+                        //     $d = 0;
+                        //     $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05", 5 => "2022-08-06"];
+                        //     $pd[$i] = \array_diff($new_pd, $pd[$i]);
+                        //     $pd[$i] = array_values($pd[$i]);
+                        //     $notYet = null;
+                        // } else{
+                        //     break;
+                        // }
+                    }
+                    if ($endTime > $maxTime){
+                        if($notYetTime == "first"){
+                            if($time_period[$i] == "Morning"){
+                                $startTime = $startTimeMLec;
+                                $maxTime = "12:00";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $startTime = $startTimeALec;
+                                $maxTime = "21:00";
+                            }
+                        }
+                        else if($notYetTime == "second"){
+                            if($time_period[$i] == "Morning"){
+                                $startTime = "07:00";
+                                $maxTime = "12:00";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $startTime = "13:00";
+                                $maxTime = "21:00";
+                            }
+                        }
+                        $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                        $endTime = date('H:i', $endTime);
+                    }
                     }
                 }
                     
@@ -2814,253 +3044,560 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                 $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
                 $endTime = date('H:i', $endTime);
             }
-        }
-        $noConflict = null;
-        if($d >= count($pd[$i])){
-            $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05", 5 => "2022-08-06"];
-            $pd[$i] = \array_diff($new_pd, $pd[$i]);
-            $pd[$i] = array_values($pd[$i]);
-            if($time_period[$i] == "Morning"){
-                $startTime = $startTimeM;
-                $maxTime = "12:00";
-            }
-            else if($time_period[$i] == "Afternoon"){
-                $startTime = $startTimeA;
-                $maxTime = "20:00";
-            }
-            $endTime = strtotime("+$labb hour", strtotime($startTime));
-            $endTime = date('H:i', $endTime);
-        }
-        while($labHours > 0){
-            while($d < count($pd[$i])){
-                // if($DB_Days == $pd[$i][$d]){
-                    if ($endTime > $maxTime){
-                        $maxT = strtotime($maxTime);
-                        $maxTH = date("H", $maxT);//maxTime hours
-                        $maxTH = 60 * $maxTH;
-                        $maxTM = date("i", $maxT);//maxTime minutes
-                        $maxTotM = $maxTH + $maxTM;//maxTime in minutes
-                        $endT = strtotime($endTime);
-                        $endTH = date("H", $endT);//endTime hours
-                        $endTH = 60 * $endTH;
-                        $endTM = date("i", $endT);//endTime minutes
-                        $endTotM = $endTH + $endTM;
-                        $diffME = $endTotM - $maxTotM;
-                        $endTime = date("H:i",strtotime("-$diffME minutes",strtotime($endTime)));
-                        $startTime = date("H:i",strtotime("-$diffME minutes",strtotime($startTime)));
-                            
-                        if($time_period[$i] == "Morning"){
-                            if(startTime < "07:00"){
-                                $startTime = "13:00";
-                                $endTime = date('H:i', strtotime("+$labb hour", strtotime($startTime)));
-                                $maxTime = "20:00";
-                            }
-                        }
-                        else if($time_period[$i] == "Afternoon"){
-                            $labb2 = $labb / 2;
-                            $hrs = floor($labb2);
-                            $mins = ($labb2 - $hrs) * 60;
-                            $startTime = "07:00";
+
+            if ($endTime > $maxTime){
+                $maxT = strtotime($maxTime);
+                $maxTH = date("H", $maxT);//maxTime hours
+                $maxTH = 60 * $maxTH;
+                $maxTM = date("i", $maxT);//maxTime minutes
+                $maxTotM = $maxTH + $maxTM;//maxTime in minutes
+                $endT = strtotime($endTime);
+                $endTH = date("H", $endT);//endTime hours
+                $endTH = 60 * $endTH;
+                $endTM = date("i", $endT);//endTime minutes
+                $endTotM = $endTH + $endTM;
+                $diffME = $endTotM - $maxTotM;
+                $endTime = date("H:i",strtotime("-$diffME minutes",strtotime($endTime)));
+                $startTime = date("H:i",strtotime("-$diffME minutes",strtotime($startTime)));
+    
+                if($time_period[$i] == "Morning"){
+                    if($labb >= 6 && $labb <= 8){
+                        $startTime = "13:00";
+                        $time_period[$i] = "Afternoon";
+                        $startTimeALec = "13:00";
+                        $endTime = date('H:i', strtotime("+$labb hour", strtotime($startTime)));
+                        $maxTime = "21:00";
+                    }
+                    else if($labb > 8){
+                        $labb = $labb / 2;
+                        if($labb <= 4){
+                            $hrs = floor($labb);
+                            $mins = ($labb - $hrs) * 60;
+                            $startTime = "08:00";
+                            $time_period[$i] = "Morning";
+                            $startTimeMLab = "08:00";
                             $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
                             $maxTime = "12:00";
-                            while($endTime <= $maxTime){
-                                foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
-                                                    ->where('schedules.academicYear', $AY)
-                                                    ->where('schedules.semester', $sem)
-                                                    ->cursor() as $schedule)
-                                {
-                                    if( ($schedule['day'] == $pd[$i][$d]) AND
-                                        ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
-                                            date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
-
-                                            ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
-                                            date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
-                                            date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
-
-                                            ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
-                                            date('H:i', strtotime($schedule['endTime'])) > $startTime AND
-                                            date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
-                                    )
-                                    {   
-                                        if(($schedule['faculty_id'] == $faculties[$i])) {
-                                            $noConflict=true;
-                                            break;
-                                        }
-                                        else if(($schedule['classroom_id'] == $classrooms[$i])) {
-                                            $noConflict=true;
-                                            break;
-                                        }
-                                        else if(($schedule['schedule_id'] == $data['schedule_id']) AND
-                                            ($schedule['faculty_id'] != $faculties[$i]) AND
-                                            ($schedule['classroom_id'] != $classrooms[$i])){
-                                            $noConflict=true;
-                                            break;
-                                        }
-                                        else {
-                                            $noConflict=false;
-                                        }                            
-                                    } else{
-                                        $noConflict=false;
-                                    }
-                                }
-                                if($noConflict == false)
-                                {
-                                    $classschedule = ClassSchedule::create([
-                                        "schedule_id" => $data["schedule_id"],
-                                        "day" => $pd[$i][$d],
-                                        "startTime" => $startTime,
-                                        "endTime" => $endTime,
-                                        "subject_id" => $subjects[$i],
-                                        "faculty_id" => $faculties[$i],
-                                        "classroom_id" => $classrooms[$i],
-                                        "user_id" => $data["user_id"]
-                                    ]);
-    
-                                    $labHours = $labHours - $labb2;
-                                    $startTime = "13:00";
-                                    $endTime = date('H:i', strtotime("+$labb2 hour", strtotime($startTime)));
-                                    $maxTime = "20:00";
-                                }
-                                // if(!(($DB_StartTime <= $startTime && $DB_EndTime > $startTime) || ($DB_StartTime < $endTime && $DB_EndTime >= $endTime)))
-                                else{
-                                    //add startTime and endTime
-                                    $add = strtotime($startTime);
-                                    $add = date("i", $add);
-                                    $add = 60 - $add;
-                                    $startTime = strtotime("+$add minutes", strtotime($startTime));
-                                    $startTime = date('H:i', $startTime);
-                                    $endTime = strtotime("+$labb2 hour", strtotime($startTime));
-                                    $endTime = date('H:i', $endTime);
-                                }
-                                if($labHours <= 0)
-                                    break;
-                            }
+                        } else {
+                            $hrs = floor($labb);
+                            $mins = ($labb - $hrs) * 60;
+                            $startTime = "13:00";
+                            $time_period[$i] = "Afternoon";
+                            $startTimeALab = "13:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "21:00";
                         }
                     }
-                    else{
-                        while($endTime <= $maxTime){
-                            foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
-                                                ->where('schedules.academicYear', $AY)
-                                                ->where('schedules.semester', $sem)
-                                                ->cursor() as $schedule)
-                            {
-                                if( ($schedule['day'] == $pd[$i][$d]) AND
-                                    ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
-                                        date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
+                }
+                else if($time_period[$i] == "Afternoon"){
+                    if($labb > 8){
+                        $labb = $labb / 2;
+                        if($labb <= 4){
+                            $hrs = floor($labb);
+                            $mins = ($labb - $hrs) * 60;
+                            $startTime = "08:00";
+                            $time_period[$i] = "Morning";
+                            $startTimeMLab = "08:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "12:00";
+                        } else {
+                            $hrs = floor($labb);
+                            $mins = ($labb - $hrs) * 60;
+                            $startTime = "13:00";
+                            $time_period[$i] = "Afternoon";
+                            $startTimeALab = "13:00";
+                            $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+                            $maxTime = "21:00";
+                        }
+                    }
+                    
+                }
+            }
+        }
+        // if ($labHours > 0){
+        //     $labb = $labHours / $split_lab[$i];
 
-                                        ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
-                                        date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
-                                        date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
+        //     if($labb % $split_lab[$i] == 0){
+        //         $endTime = strtotime("+$labb hour", strtotime($startTime));
+        //         $endTime = date('H:i', $endTime);
+        //     } else {
+        //         $hrs = floor($labb);
+        //         $mins = ($labb - $hrs) * 60;
+        //         $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
+        //         $endTime = date('H:i', $endTime);
+        //     }
+        // }
+        $noConflict = null;
+        while($labHours > 0){
+            while($d < count($pd[$i])){
+                while($endTime <= $maxTime){
+                    foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+                                        ->where('schedules.academicYear', $AY)
+                                        ->where('schedules.semester', $sem)
+                                        ->cursor() as $schedule)
+                    {
+                        if( ($schedule['day'] == $pd[$i][$d]) AND
+                            ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
+                                date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
 
-                                        ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
-                                        date('H:i', strtotime($schedule['endTime'])) > $startTime AND
-                                        date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
-                                )
-                                {   
-                                    if(($schedule['faculty_id'] == $faculties[$i])) {
-                                        $noConflict=true;
-                                        break;
-                                    }
-                                    else if(($schedule['classroom_id'] == $classrooms[$i])) {
-                                        $noConflict=true;
-                                        break;
-                                    }
-                                    else if(($schedule['schedule_id'] == $data['schedule_id']) AND
-                                        ($schedule['faculty_id'] != $faculties[$i]) AND
-                                        ($schedule['classroom_id'] != $classrooms[$i])){
-                                        $noConflict=true;
-                                        break;
-                                    }
-                                    else {
-                                        $noConflict=false;
-                                    }                            
-                                } else{
-                                    $noConflict=false;
-                                }
-                            }
-                            if($noConflict == false)
-                            {
-                                $classschedule = ClassSchedule::create([
-                                    "schedule_id" => $data["schedule_id"],
-                                    "day" => $pd[$i][$d],
-                                    "startTime" => $startTime,
-                                    "endTime" => $endTime,
-                                    "subject_id" => $subjects[$i],
-                                    "faculty_id" => $faculties[$i],
-                                    "classroom_id" => $classrooms[$i],
-                                    "user_id" => $data["user_id"]
-                                ]);
+                                ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
+                                date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
+                                date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
 
-                                $labHours = $labHours - $labb;
+                                ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
+                                date('H:i', strtotime($schedule['endTime'])) > $startTime AND
+                                date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
+                        )
+                        {   
+                            if(($schedule['faculty_id'] == $faculties[$i])) {
+                                $noConflict=true;
                                 break;
                             }
-                            // if(!(($DB_StartTime <= $startTime && $DB_EndTime > $startTime) || ($DB_StartTime < $endTime && $DB_EndTime >= $endTime)))
-                            else{
-                                //add startTime and endTime
-                                $add = strtotime($startTime);
-                                $add = date("i", $add);
-                                $add = 60 - $add;
-                                $startTime = strtotime("+$add minutes", strtotime($startTime));
-                                $startTime = date('H:i', $startTime);
-                                $endTime = strtotime("+$labb hour", strtotime($startTime));
-                                $endTime = date('H:i', $endTime);
+                            else if(($schedule['classroom_id'] == $classrooms_lab[$i])) {
+                                $noConflict=true;
+                                break;
                             }
-                        }
-                        //reset startTime, then add $d
-                        if ($endTime > $maxTime){
-                            if($time_period[$i] == "Morning"){
-                                $startTime = $startTimeM;
-                                $maxTime = "12:00";
+                            else if(($schedule['schedule_id'] == $data['schedule_id']) AND
+                                ($schedule['faculty_id'] != $faculties[$i]) AND
+                                ($schedule['classroom_id'] != $classrooms_lab[$i])){
+                                $noConflict=true;
+                                break;
                             }
-                            else if($time_period[$i] == "Afternoon"){
-                                $startTime = $startTimeA;
-                                $maxTime = "20:00";
-                            }
-                            $endTime = strtotime("+$labb hour", strtotime($startTime));
-                            $endTime = date('H:i', $endTime);
+                            else {
+                                $noConflict=false;
+                            }                            
+                        } else{
+                            $noConflict=false;
                         }
                     }
-                // }
+                    if($noConflict == false)
+                    {
+                        // $classschedule = ClassSchedule::create([
+                        //     "schedule_id" => $data["schedule_id"],
+                        //     "day" => $pd[$i][$d],
+                        //     "startTime" => $startTime,
+                        //     "endTime" => $endTime,
+                        //     "subject_id" => $subjects[$i],
+                        //     "faculty_id" => $faculties[$i],
+                        //     "classroom_id" => $classrooms[$i],
+                        //     "user_id" => $data["user_id"]
+                        // ]);
+
+                        array_push($classschedules_, (object)[
+                            'schedule_id' => $data["schedule_id"],
+                            'day' => $pd[$i][$d],
+                            'startTime' => $startTime,
+                            'endTime' => $endTime,
+                            'subject_id' => $subjects[$i],
+                            'faculty_id' => $faculties[$i],
+                            'classroom_id' => $classrooms_lab[$i],
+                            'user_id' => $data["user_id"],
+                        ]);
+
+                        $labHours = $labHours - $labb;
+                        break;
+                    }
+                    else{
+                        //add startTime and endTime
+                        $add = strtotime($startTime);
+                        $add = date("i", $add);
+                        if($add >= 30)
+                        $add = 60 - $add;
+                        else
+                        $add = 30 - $add;
+                        if($add == 60)
+                        $add = 30;
+                        $startTime = strtotime("+$add minutes", strtotime($startTime));
+                        $startTime = date('H:i', $startTime);
+                        $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                        $endTime = date('H:i', $endTime);
+                    }
+                }
+
                 if ($labHours <= 0){
                     $d++;
                     break;
                 }
-                    
                 else{
                     $d++;
+                    if($NONELAB == true && $notYetLab == "fourth"){
+                        $labHours = 0;
+                        $d = 0;
+                        $pd[$i] = $temp_pd;
+
+                        $classschederrors_[$i] = new SchedulesErrors();
+                        $classschederrors_[$i]->laberror = "Unable to find available schedule for the Laboratory Session. Please try to change the Faculty or Classroom.";
+                        
+                        if($time_period[$i] == "Morning"){
+                            $startTime = $startTimeM;
+                            $maxTime = "12:00";
+                        }
+                        else if($time_period[$i] == "Afternoon"){
+                            $startTime = $startTimeA;
+                            $maxTime = "21:00";
+                        }
+                        break;
+                    } else {
                     if($d == count($pd[$i])){
-                        if($notYetLab == false){
-                            $notYetLab = true;
+                        if($notYetLab == "first"){
+                            $d = 0;
                             if($time_period[$i] == "Morning"){
-                                $startTime = "13:00";
-                                $maxTime = "20:00";
-                                $endTime = strtotime("+$labb hour", strtotime($startTime));
-                                $endTime = date('H:i', $endTime);
-                                $d=0;
+                                $time_period[$i] = "Afternoon";
                             }
                             else if($time_period[$i] == "Afternoon"){
-                                $startTime = "07:00";
-                                $maxTime = "12:00";
-                                $endTime = strtotime("+$labb hour", strtotime($startTime));
-                                $endTime = date('H:i', $endTime);
-                                $d=0;
+                                $time_period[$i] = "Morning";
                             }
-                        } else if($notYetLab == true) {
+                            $notYetLab = "second";
+                            $notYetTimeLab = "first";
+                        }
+                        else if($notYetLab == "second"){
                             $d = 0;
-                            $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05", 5 => "2022-08-06"];
+                            if($time_period[$i] == "Morning"){
+                                $time_period[$i] = "Afternoon";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $time_period[$i] = "Morning";
+                            }
+                            $notYetTimeLab = "second";
+                            $notYetLab = "third";
+                        }
+                        else if($notYetLab == "third"){
+                            $d = 0;
+                            if($time_period[$i] == "Morning"){
+                                $time_period[$i] = "Afternoon";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $time_period[$i] = "Morning";
+                            }
+                            $notYetTimeLab = "second";
+                            $notYetLab = "fourth";
+                        }
+                        else if($notYetLab == "fourth"){
+                            $d = 0;
+                            $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05"];
                             $pd[$i] = \array_diff($new_pd, $pd[$i]);
                             $pd[$i] = array_values($pd[$i]);
-                            $notYetLab = null;
-                        }
-                        else{
-                            break;
+                            if($time_period[$i] == "Morning"){
+                                $time_period[$i] = "Afternoon";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $time_period[$i] = "Morning";
+                            }
+                            $notYetTimeLab = "first";
+                            $notYetLab = "first";
+                            $NONELAB = true;
                         }
                     }
+                    if ($endTime > $maxTime){
+                        if($notYetTimeLab == "first"){
+                            if($time_period[$i] == "Morning"){
+                                $startTime = $startTimeMLab;
+                                $maxTime = "12:00";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $startTime = $startTimeALab;
+                                $maxTime = "21:00";
+                            }
+                        }
+                        else if($notYetTimeLab == "second"){
+                            if($time_period[$i] == "Morning"){
+                                $startTime = "07:00";
+                                $maxTime = "12:00";
+                            }
+                            else if($time_period[$i] == "Afternoon"){
+                                $startTime = "13:00";
+                                $maxTime = "21:00";
+                            }
+                        }
+                        $endTime = strtotime("+$labb hour", strtotime($startTime));
+                        $endTime = date('H:i', $endTime);
+                    }
+                    }
                 }
+                    
             } 
         }
+        // if($d >= count($pd[$i])){
+        //     $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05", 5 => "2022-08-06"];
+        //     $pd[$i] = \array_diff($new_pd, $pd[$i]);
+        //     $pd[$i] = array_values($pd[$i]);
+        //     if($time_period[$i] == "Morning"){
+        //         $startTime = $startTimeM;
+        //         $maxTime = "12:00";
+        //     }
+        //     else if($time_period[$i] == "Afternoon"){
+        //         $startTime = $startTimeA;
+        //         $maxTime = "20:00";
+        //     }
+        //     $endTime = strtotime("+$labb hour", strtotime($startTime));
+        //     $endTime = date('H:i', $endTime);
+        // }
+        // while($labHours > 0){
+        //     while($d < count($pd[$i])){
+        //         // if($DB_Days == $pd[$i][$d]){
+        //             if ($endTime > $maxTime){
+        //                 $maxT = strtotime($maxTime);
+        //                 $maxTH = date("H", $maxT);//maxTime hours
+        //                 $maxTH = 60 * $maxTH;
+        //                 $maxTM = date("i", $maxT);//maxTime minutes
+        //                 $maxTotM = $maxTH + $maxTM;//maxTime in minutes
+        //                 $endT = strtotime($endTime);
+        //                 $endTH = date("H", $endT);//endTime hours
+        //                 $endTH = 60 * $endTH;
+        //                 $endTM = date("i", $endT);//endTime minutes
+        //                 $endTotM = $endTH + $endTM;
+        //                 $diffME = $endTotM - $maxTotM;
+        //                 $endTime = date("H:i",strtotime("-$diffME minutes",strtotime($endTime)));
+        //                 $startTime = date("H:i",strtotime("-$diffME minutes",strtotime($startTime)));
+                            
+        //                 if($time_period[$i] == "Morning"){
+        //                     if(startTime < "07:00"){
+        //                         $startTime = "13:00";
+        //                         $endTime = date('H:i', strtotime("+$labb hour", strtotime($startTime)));
+        //                         $maxTime = "20:00";
+        //                     }
+        //                 }
+        //                 else if($time_period[$i] == "Afternoon"){
+        //                     $labb2 = $labb / 2;
+        //                     $hrs = floor($labb2);
+        //                     $mins = ($labb2 - $hrs) * 60;
+        //                     $startTime = "07:00";
+        //                     $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
+        //                     $maxTime = "12:00";
+        //                     while($endTime <= $maxTime){
+        //                         foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+        //                                             ->where('schedules.academicYear', $AY)
+        //                                             ->where('schedules.semester', $sem)
+        //                                             ->cursor() as $schedule)
+        //                         {
+        //                             if( ($schedule['day'] == $pd[$i][$d]) AND
+        //                                 ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
+        //                                     date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
+
+        //                                     ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
+        //                                     date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
+        //                                     date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
+
+        //                                     ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
+        //                                     date('H:i', strtotime($schedule['endTime'])) > $startTime AND
+        //                                     date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
+        //                             )
+        //                             {   
+        //                                 if(($schedule['faculty_id'] == $faculties[$i])) {
+        //                                     $noConflict=true;
+        //                                     break;
+        //                                 }
+        //                                 else if(($schedule['classroom_id'] == $classrooms[$i])) {
+        //                                     $noConflict=true;
+        //                                     break;
+        //                                 }
+        //                                 else if(($schedule['schedule_id'] == $data['schedule_id']) AND
+        //                                     ($schedule['faculty_id'] != $faculties[$i]) AND
+        //                                     ($schedule['classroom_id'] != $classrooms[$i])){
+        //                                     $noConflict=true;
+        //                                     break;
+        //                                 }
+        //                                 else {
+        //                                     $noConflict=false;
+        //                                 }                            
+        //                             } else{
+        //                                 $noConflict=false;
+        //                             }
+        //                         }
+        //                         if($noConflict == false)
+        //                         {
+        //                             $classschedule = ClassSchedule::create([
+        //                                 "schedule_id" => $data["schedule_id"],
+        //                                 "day" => $pd[$i][$d],
+        //                                 "startTime" => $startTime,
+        //                                 "endTime" => $endTime,
+        //                                 "subject_id" => $subjects[$i],
+        //                                 "faculty_id" => $faculties[$i],
+        //                                 "classroom_id" => $classrooms[$i],
+        //                                 "user_id" => $data["user_id"]
+        //                             ]);
+    
+        //                             $labHours = $labHours - $labb2;
+        //                             $startTime = "13:00";
+        //                             $endTime = date('H:i', strtotime("+$labb2 hour", strtotime($startTime)));
+        //                             $maxTime = "20:00";
+        //                         }
+        //                         // if(!(($DB_StartTime <= $startTime && $DB_EndTime > $startTime) || ($DB_StartTime < $endTime && $DB_EndTime >= $endTime)))
+        //                         else{
+        //                             //add startTime and endTime
+        //                             $add = strtotime($startTime);
+        //                             $add = date("i", $add);
+        //                             $add = 60 - $add;
+        //                             $startTime = strtotime("+$add minutes", strtotime($startTime));
+        //                             $startTime = date('H:i', $startTime);
+        //                             $endTime = strtotime("+$labb2 hour", strtotime($startTime));
+        //                             $endTime = date('H:i', $endTime);
+        //                         }
+        //                         if($labHours <= 0)
+        //                             break;
+        //                     }
+        //                 }
+        //             }
+        //             else{
+        //                 while($endTime <= $maxTime){
+        //                     foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+        //                                         ->where('schedules.academicYear', $AY)
+        //                                         ->where('schedules.semester', $sem)
+        //                                         ->cursor() as $schedule)
+        //                     {
+        //                         if( ($schedule['day'] == $pd[$i][$d]) AND
+        //                             ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
+        //                                 date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
+
+        //                                 ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
+        //                                 date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
+        //                                 date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
+
+        //                                 ( date('H:i', strtotime($schedule['startTime'])) <= $startTime  AND
+        //                                 date('H:i', strtotime($schedule['endTime'])) > $startTime AND
+        //                                 date('H:i', strtotime($schedule['endTime'])) <= $endTime ) )
+        //                         )
+        //                         {   
+        //                             if(($schedule['faculty_id'] == $faculties[$i])) {
+        //                                 $noConflict=true;
+        //                                 break;
+        //                             }
+        //                             else if(($schedule['classroom_id'] == $classrooms[$i])) {
+        //                                 $noConflict=true;
+        //                                 break;
+        //                             }
+        //                             else if(($schedule['schedule_id'] == $data['schedule_id']) AND
+        //                                 ($schedule['faculty_id'] != $faculties[$i]) AND
+        //                                 ($schedule['classroom_id'] != $classrooms[$i])){
+        //                                 $noConflict=true;
+        //                                 break;
+        //                             }
+        //                             else {
+        //                                 $noConflict=false;
+        //                             }                            
+        //                         } else{
+        //                             $noConflict=false;
+        //                         }
+        //                     }
+        //                     if($noConflict == false)
+        //                     {
+        //                         $classschedule = ClassSchedule::create([
+        //                             "schedule_id" => $data["schedule_id"],
+        //                             "day" => $pd[$i][$d],
+        //                             "startTime" => $startTime,
+        //                             "endTime" => $endTime,
+        //                             "subject_id" => $subjects[$i],
+        //                             "faculty_id" => $faculties[$i],
+        //                             "classroom_id" => $classrooms[$i],
+        //                             "user_id" => $data["user_id"]
+        //                         ]);
+
+        //                         $labHours = $labHours - $labb;
+        //                         break;
+        //                     }
+        //                     // if(!(($DB_StartTime <= $startTime && $DB_EndTime > $startTime) || ($DB_StartTime < $endTime && $DB_EndTime >= $endTime)))
+        //                     else{
+        //                         //add startTime and endTime
+        //                         $add = strtotime($startTime);
+        //                         $add = date("i", $add);
+        //                         $add = 60 - $add;
+        //                         $startTime = strtotime("+$add minutes", strtotime($startTime));
+        //                         $startTime = date('H:i', $startTime);
+        //                         $endTime = strtotime("+$labb hour", strtotime($startTime));
+        //                         $endTime = date('H:i', $endTime);
+        //                     }
+        //                 }
+        //                 //reset startTime, then add $d
+        //                 if ($endTime > $maxTime){
+        //                     if($time_period[$i] == "Morning"){
+        //                         $startTime = $startTimeM;
+        //                         $maxTime = "12:00";
+        //                     }
+        //                     else if($time_period[$i] == "Afternoon"){
+        //                         $startTime = $startTimeA;
+        //                         $maxTime = "20:00";
+        //                     }
+        //                     $endTime = strtotime("+$labb hour", strtotime($startTime));
+        //                     $endTime = date('H:i', $endTime);
+        //                 }
+        //             }
+        //         // }
+        //         if ($labHours <= 0){
+        //             $d++;
+        //             break;
+        //         }
+        //         else{
+        //             $d++;
+        //             if($d == count($pd[$i])){
+        //                 if($notYetLab == false){
+        //                     $notYetLab = true;
+        //                     if($time_period[$i] == "Morning"){
+        //                         $startTime = "13:00";
+        //                         $maxTime = "20:00";
+        //                         $endTime = strtotime("+$labb hour", strtotime($startTime));
+        //                         $endTime = date('H:i', $endTime);
+        //                         $d=0;
+        //                     }
+        //                     else if($time_period[$i] == "Afternoon"){
+        //                         $startTime = "07:00";
+        //                         $maxTime = "12:00";
+        //                         $endTime = strtotime("+$labb hour", strtotime($startTime));
+        //                         $endTime = date('H:i', $endTime);
+        //                         $d=0;
+        //                     }
+        //                 } else if($notYetLab == true) {
+        //                     $d = 0;
+        //                     $new_pd = [0 => "2022-08-01", 1 => "2022-08-02", 2 => "2022-08-03", 3 => "2022-08-04", 4 => "2022-08-05", 5 => "2022-08-06"];
+        //                     $pd[$i] = \array_diff($new_pd, $pd[$i]);
+        //                     $pd[$i] = array_values($pd[$i]);
+        //                     $notYetLab = null;
+        //                 }
+        //                 else{
+        //                     break;
+        //                 }
+        //             }
+        //         }
+        //     } 
+        // }
     }
-        
+    
+    if (empty($classschederrors_)) {
+        for($i = 0; $i < count($classschedules_); $i++) {
+            ClassSchedule::create([
+                "schedule_id" => $classschedules_[$i]->schedule_id,
+                "day" => $classschedules_[$i]->day,
+                "startTime" => $classschedules_[$i]->startTime,
+                "endTime" => $classschedules_[$i]->endTime,
+                "subject_id" => $classschedules_[$i]->subject_id,
+                "faculty_id" => $classschedules_[$i]->faculty_id,
+                "classroom_id" => $classschedules_[$i]->classroom_id,
+                "user_id" => $classschedules_[$i]->user_id
+            ]);
+        }
+        // $classschedule = ClassSchedule::create([
+        //     "schedule_id" => $data["schedule_id"],
+        //     "day" => $pd[$i][$d],
+        //     "startTime" => $startTime,
+        //     "endTime" => $endTime,
+        //     "subject_id" => $subjects[$i],
+        //     "faculty_id" => $faculties[$i],
+        //     "classroom_id" => $classrooms[$i],
+        //     "user_id" => $data["user_id"]
+        // ]);
+        return [
+            "success" => true,
+            "response" => [
+                "schedulessaved" => $classschedules_
+            ]
+        ];
+    } else {
+        return [
+            "success" => false,
+            "response" => [
+                "scheduleserror" => $classschederrors_
+            ]
+        ];
+    }
     // dump ($startTimeM);
     // print ($startTimeA);
     // dump ($subjects);

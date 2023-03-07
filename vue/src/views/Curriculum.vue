@@ -72,8 +72,7 @@
                         @keyup="v$.selectedCourse.$touch()"
                         @blur="v$.selectedCourse.$touch()"
                         required
-                        @change="viewcurr2 = true, curr = false, reset"
-                        
+                        @change="curr = false, viewcurr2 = true, reset"
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
                         <option disabled value="" class="text-center">-- Select a Degree Program --</option>
@@ -1280,9 +1279,9 @@
                     </div>
                 </div>
                 <div v-if="(currList == true && (userType == 'reg' || (userType == 'dept' && (SubjectTypeDept2 == 'Core' || SubjectTypeDept == 'Core'))))" class="col-span-1">
-                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                    <div class="shadow overflow-hidden h-96 overflow-y-scroll overflow-x-scroll border-b border-gray-200 sm:rounded-lg">
                         <table
-                            class="table-auto min-w-full divide-y divide-gray-200"
+                            class="table-auto min-w-full  divide-y divide-gray-200"
                         >
                             <caption class="bg-gray-50 py-3 text-center pl-3 text-xs font-medium text-gray-500 uppercase">Saved Curriculums</caption>
                             <thead class="bg-gray-50">
@@ -2083,7 +2082,9 @@ export default {
             h$,
             resetModel,
             toggleAYSem,
-            currList
+            currList,
+            viewcurr1,
+            viewcurr2
         }
     },
     mounted () {

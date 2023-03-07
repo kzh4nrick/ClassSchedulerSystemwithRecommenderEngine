@@ -1,13 +1,9 @@
-/**
- * Created by Zura on 12/25/2021.
- */
  import axios from "axios";
  import store from "./store";
  import router from "./router";
  
  const axiosClient = axios.create({
       baseURL: `http://127.0.0.1:8000/api`
-      // baseURL: `https://calm-lake-70586.herokuapp.com/api`
  })
  
  axiosClient.interceptors.request.use(config => {
@@ -25,8 +21,6 @@
      router.push({name: 'NotFound'})
    }
    return Promise.reject(error.response);
-    // response => response,
-    // error => Promise.reject(error.response)
  })
  
  export default axiosClient;
