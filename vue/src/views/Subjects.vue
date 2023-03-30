@@ -1,24 +1,24 @@
 <template>
         <header class="bg-white shadow">
             <div
-                class="max-w-7xl mx-auto py-3 px-4 text-center sm:px-6 lg:px-8"
+                class="max-w-screen mx-auto py-3 text-center"
             >
-                <h1 v-if="userType == 'reg'" class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-sky-900">
+                <h1 v-if="userType == 'reg'" class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-[#253B80]">
                     VIEWING OF COURSES OF {{ college.College_Name }}
                 </h1>
-                <h1 v-else class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-sky-900">
+                <h1 v-else class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-[#253B80]">
                     UPDATE & MANAGING OF COURSES OF {{ college.Department_Name }}
                 </h1>
             </div>
         </header>
         <main>
-            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="max-w-[90vw] mx-auto py-2">
                 <!-- Replace with your content -->
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="mt-5 md:mt-0 col-span-1">
+                    <div class="col-span-1">
                         <form v-if="userType == 'reg'" class="form">
-                            <div class="shadow overflow-hidden sm:rounded-md">
-                                <div class="px-4 py-5 bg-white sm:p-6">
+                            <div class="shadow overflow-hidden rounded-md">
+                                <div class="bg-white p-5">
                                     <div class="grid grid-cols-4 gap-6">
                                         <div class="col-span-6">
                                             <label
@@ -110,9 +110,9 @@
                                 </div>
                             </div>
                         </form>
-                        <form v-else class="form" @submit.prevent="AddNewSubject(), course_id = ''">
-                            <div class="shadow overflow-hidden sm:rounded-md">
-                                <div class="px-4 py-5 bg-white sm:p-6">
+                        <form v-else class="form" @submit.prevent="AddNewSubject()">
+                            <div class="shadow overflow-hidden rounded-md">
+                                <div class="bg-white p-5">
                                     <div class="grid grid-cols-4 gap-6">
                                         <div class="col-span-6">
                                             <label
@@ -300,10 +300,10 @@
                     <div class="col-span-2">
                         <div class="flex flex-col">
                             <div
-                                class="-my-2sm:-mx-6 overflow-x-auto h-96 lg:-mx-8"
+                                class="overflow-auto h-auto max-h-[82vh]"
                             >
                                 <div
-                                    class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8"
+                                    class="align-middle inline-block min-w-full p-px pb-1 pr-1"
                                 >
                                     <div
                                         class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg"
@@ -521,11 +521,11 @@
                                                         </a>
                                                     </td>
                                                 </tr>
-                                                <tr class="EmptySubjects" v-else>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">No Records of Course</td>
-                                                </tr>
                                             </tbody>
                                         </table>
+                                        <div class="EmptySubjects p-2" v-if="subjectList.length <= 0">
+                                            <span class="pl-4 whitespace-nowrap text-sm font-roboto tracking-wide text-[#253B80]">No Records of Courses.</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -580,6 +580,7 @@ export default {
 
         const reset = () => {
             model.value = {...initialState};
+            course_id.value = ''
         }
         const fetchSubjects = async () => {
             subjectList.value = await APIController.FetchSubjectsByCollege(college.value.id);
@@ -609,7 +610,6 @@ export default {
         }
 
         const AddNewSubject = async () => {
-            console.log("Course: "+course_id.value+" || Dept ID: "+college.value.id);
             let tempSubject = await APIController.CreateSubject(model.value.Subject_Code, model.value.Subject_Name, model.value.Subject_Type, course_id.value, college.value.id);
             if (tempSubject) {
                 if(userType == 'reg'){

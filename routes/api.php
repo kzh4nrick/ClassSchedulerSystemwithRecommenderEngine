@@ -10,6 +10,7 @@ use App\Models\Course;
 use App\Models\Faculty;
 use App\Models\Classroom;
 use App\Models\Curriculum;
+use App\Models\Block;
 use App\Models\College;
 use App\Models\Department;
 use App\Models\Schedule;
@@ -326,6 +327,7 @@ Route::get("/subjects/ME/courseEDIT/{id}/{s_id}", function ($id, $s_id) {
     $subjects = DB::table('subjects')
                 ->where('course_id', $id)
                 ->where('Subject_Type', $type)
+                ->orderBy('subjects.Subject_Code')
                 ->get();
 
     if (empty($subjects)) {
@@ -350,6 +352,7 @@ Route::get("/subjects/ME/course/{id}/{m}", function ($id, $me) {
     $subjects = DB::table('subjects')
                 ->where('course_id', $id)
                 ->where('Subject_Type', $me)
+                ->orderBy('subjects.Subject_Code')
                 ->get();
 
     if (empty($subjects)) {
@@ -374,6 +377,7 @@ Route::get("/subjects/Core/department/{id}", function ($id) {
     $subjects = DB::table('subjects')
                 ->where('department_id', $id)
                 ->where('Subject_Type', 'Core')
+                ->orderBy('subjects.Subject_Code')
                 ->get();
 
     if (empty($subjects)) {
@@ -401,6 +405,7 @@ Route::get("/subjects/GEC/college/{id}", function ($id) {
                 ->where('colleges.id', $id)
                 ->where('subjects.Subject_Type', '=','GEC')
                 ->select('subjects.*')
+                ->orderBy('subjects.Subject_Code')
                 ->get();
 
     if (empty($subjects)) {
@@ -464,6 +469,35 @@ Route::post('/subjects/create', function (Request $request) {
 //GET A SINGLE SUBJECT
 Route::get("/subjects/{id}", function (Request $request, $id) {
     $subject = Subject::find($id);
+
+    if (empty($subject)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No record for Subject found."
+            ]
+        ];
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "subject" => $subject
+        ]
+    ];
+});
+
+//GET THE DETAILS OF A SUBJECT BY CURRICULUM
+Route::get("/subjects-curriculum/{id}/{AY}/{sem}/{c_id}/{YL}", function (Request $request, $id, $AY, $sem, $c_id, $YL) {
+    $subject = DB::table('subjects')
+            ->join('curricula', 'subjects.id', '=', 'curricula.subject_id')
+            ->where('curricula.subject_id', $id)
+            ->where('curricula.course_id', $c_id)
+            ->where('curricula.academicYear', $AY)
+            ->where('curricula.semester', $sem)
+            ->where('curricula.yearLevel', $YL)
+            ->select('subjects.id','curricula.lec', 'curricula.lab')
+            ->first();
 
     if (empty($subject)) {
         return [
@@ -812,6 +846,37 @@ Route::post('/courses/create', function (Request $request) {
 
 });
 
+//CREATE RECORD FOR COURSE BLOCKS
+Route::post('/courses/blocks/create', function (Request $request) {
+    $data = $request->all();
+
+    $block = Block::create([
+        "course_id" => $data["course_id"],
+        "academicYear" => $data["academicYear"],
+        "semester" => $data["semester"],
+        "first" => $data["first"],
+        "second" => $data["second"],
+        "third" => $data["third"],
+        "fourth" => $data["fourth"],
+    ]);
+
+    if (empty($block->id)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "An unexpected error has occured."
+            ]
+        ];
+    } else {
+        return [
+            "success" => true,
+            "response" => [
+                "block" => $block
+            ]
+        ];
+    }
+});
+
 //GET A SINGLE COURSE
 Route::get("/courses/{id}", function (Request $request, $id) {
     $course = Course::find($id);
@@ -833,6 +898,21 @@ Route::get("/courses/{id}", function (Request $request, $id) {
     ];
 });
 
+//GET A SINGLE COURSE BLOCK
+Route::get("/courses/block/{id}/{AY}/{sem}", function (Request $request, $id, $AY, $sem) {
+    $block = Block::where('course_id', $id)
+                ->where('academicYear', $AY)
+                ->where('semester', $sem)
+                ->first();
+
+    return [
+        "success" => true,
+        "response" => [
+            "block" => $block
+        ]
+    ];
+});
+
 //DELETE COURSE
 Route::delete('/courses/delete/{id}', function (Request $request, $id) {
     $course = Course::find($id);
@@ -846,6 +926,24 @@ Route::delete('/courses/delete/{id}', function (Request $request, $id) {
     }
 
     return ["success" => $success, "response" => $response];
+});
+
+//UPDATE RECORD FOR COURSE BLOCK
+Route::put('/courses/block/update/{id}/{AY}/{sem}', function (Request $request, $id, $AY, $sem) {
+    $data = $request->all();
+
+    $block = Block::where('course_id', $id)
+            ->where('academicYear', $AY)
+            ->where('semester', $sem)
+            ->first();
+
+    foreach ($data as $key => $value) {
+        $block->{$key} = $value;
+    }
+
+    $result = $block->save();
+
+    return ["success" => $result, "response" => ["block" => $block]];
 });
 
 //UPDATE RECORD FOR COURSE
@@ -914,12 +1012,75 @@ Route::get("/faculties/college/{id}", function ($id) {
     ];
 });
 
+//GET ALL FACULTIES BY COLLEGE FOR REPORTS
+Route::get("/faculties/college/reports/{id}/{AY}/{sem}", function ($id, $AY, $sem) {
+    $faculties = DB::table('class_schedules')
+                ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+                ->join('faculties', 'class_schedules.faculty_id', '=', 'faculties.id')
+                ->join('departments', 'faculties.department_id', '=', 'departments.id')
+                ->where('departments.college_id', $id)
+                ->where('schedules.academicYear', $AY)
+                ->where('schedules.semester', $sem)
+                ->select('faculties.*')
+                ->orderBy('faculties.Faculty_ID')
+                ->orderBy('faculties.Faculty_Name')
+                ->distinct()
+                ->get(['faculties.id']);
+
+    if (empty($faculties)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No records of Faculties found."
+            ]
+        ];
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "faculties" => $faculties
+        ]
+    ];
+});
+
 //GET ALL FACULTIES BY DEPARTMENT
 Route::get("/faculties/department/{id}", function ($id) {
     $faculties = DB::table('faculties')
         ->where('department_id', $id)
         ->orderBy('Faculty_Name')
         ->get();
+
+    if (empty($faculties)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No records of Faculties found."
+            ]
+        ];
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "faculties" => $faculties
+        ]
+    ];
+});
+
+//GET ALL FACULTIES BY DEPARTMENT FOR REPORTS
+Route::get("/faculties/department/reports/{id}/{AY}/{sem}", function ($id, $AY, $sem) {
+    $faculties = DB::table('class_schedules')
+            ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+            ->join('faculties', 'class_schedules.faculty_id', '=', 'faculties.id')
+            ->where('faculties.department_id', $id)
+            ->where('schedules.academicYear', $AY)
+            ->where('schedules.semester', $sem)
+            ->select('faculties.*')
+            ->orderBy('faculties.Faculty_ID')
+            ->orderBy('faculties.Faculty_Name')
+            ->distinct()
+            ->get(['faculties.id']);
 
     if (empty($faculties)) {
         return [
@@ -945,6 +1106,7 @@ Route::get("/faculties/department-subject/{subj}", function ($subj) {
         ->join('subjects', 'departments.id', '=', 'subjects.department_id')
         ->where('subjects.id', '=', $subj)
         ->select('faculties.*')
+        ->orderBy('faculties.Faculty_Name')
         ->get();
 
     if (empty($faculties)) {
@@ -1069,14 +1231,18 @@ Route::get("/faculties-curriculum/{id}", function ($id) {
 });
 
 //GET FACULTIES BY SUBJECT
-Route::get("/faculties-subject/{id}", function ($id) {
+Route::get("/faculties-subject/{id}/{AY}/{sem}/{c_id}/{YL}", function ($id, $AY, $sem, $c_id, $YL) {
     $curricula = DB::table('curricula')
                 ->where('curricula.subject_id', $id)
+                ->where('curricula.course_id', $c_id)
+                ->where('curricula.academicYear', $AY)
+                ->where('curricula.semester', $sem)
+                ->where('curricula.yearLevel', $YL)
                 ->pluck('curricula.faculties_id')->first();
 
     $ids = json_decode($curricula, true);
 
-    $faculty = Faculty::whereIn('id', $ids)->get();
+    $faculty = Faculty::whereIn('id', $ids)->orderBy('Faculty_Name')->get();
 
     if (empty($faculty)) {
         return [
@@ -1170,15 +1336,91 @@ Route::get("/classrooms/college/{id}", function ($id) {
     ];
 });
 
+// GET ALL CLASSROOMS BY COLLEGE FOR REPORTS
+Route::get("/classrooms/college/reports/{id}/{AY}/{sem}", function ($id, $AY, $sem) {
+    $classrooms = DB::table('class_schedules')
+                ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+                ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
+                ->where('classrooms.college_id', $id)
+                ->where('schedules.academicYear', $AY)
+                ->where('schedules.semester', $sem)
+                ->select('classrooms.*')
+                ->orderBy('classrooms.Building_No')
+                ->orderBy('classrooms.Classroom_No')
+                ->distinct()
+                ->get(['classrooms.id']);
+
+    if (empty($classrooms)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No records of Classrooms found."
+            ]
+        ];
+    } 
+
+    return [
+        "success" => true,
+        "response" => [
+            "classrooms" => $classrooms
+        ]
+    ];
+});
+
+// GET ALL CLASSROOMS BY DEPARTMENT FOR REPORTS
+Route::get("/classrooms/department/reports/{id}/{AY}/{sem}", function ($id, $AY, $sem) {
+    $classrooms = DB::table('class_schedules')
+                ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+                ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
+                ->where('class_schedules.user_id', $id)
+                ->where('schedules.academicYear', $AY)
+                ->where('schedules.semester', $sem)
+                ->select('classrooms.*')
+                ->orderBy('classrooms.Building_No')
+                ->orderBy('classrooms.Classroom_No')
+                ->distinct()
+                ->get(['classrooms.id']);
+
+    if (empty($classrooms)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No records of Classrooms found."
+            ]
+        ];
+    } 
+
+    return [
+        "success" => true,
+        "response" => [
+            "classrooms" => $classrooms
+        ]
+    ];
+});
+
 // GET ALL CLASSROOMS PER COLLEGE BY SUBJECT
-Route::get("/classrooms/college-subject/{s_id}", function ($s_id) {
-    $classrooms = DB::table('classrooms')
-    ->join('colleges', 'classrooms.college_id', '=', 'colleges.id')
-    ->join('departments', 'departments.college_id', '=', 'classrooms.college_id')
-    ->join('subjects', 'subjects.department_id', '=', 'departments.id')
-    ->where('subjects.id', $s_id)
-    ->select('classrooms.*', 'colleges.College_Name', 'colleges.Campus')
-    ->get();
+Route::get("/classrooms/college-subject/{s_id}/{type}", function ($s_id, $type) {
+    if ($type == "Lecture")
+        $classrooms = DB::table('classrooms')
+            ->join('colleges', 'classrooms.college_id', '=', 'colleges.id')
+            ->join('departments', 'departments.college_id', '=', 'classrooms.college_id')
+            ->join('subjects', 'subjects.department_id', '=', 'departments.id')
+            ->where('subjects.id', $s_id)
+            ->where('classrooms.Classroom_Type', "Lecture")
+            ->orderBy('classrooms.Building_No')
+            ->orderBy('classrooms.Classroom_No')
+            ->select('classrooms.*', 'colleges.College_Name', 'colleges.Campus')
+            ->get();
+    else
+        $classrooms = DB::table('classrooms')
+            ->join('colleges', 'classrooms.college_id', '=', 'colleges.id')
+            ->join('departments', 'departments.college_id', '=', 'classrooms.college_id')
+            ->join('subjects', 'subjects.department_id', '=', 'departments.id')
+            ->where('subjects.id', $s_id)
+            ->orderBy('classrooms.Building_No')
+            ->orderBy('classrooms.Classroom_No')
+            ->select('classrooms.*', 'colleges.College_Name', 'colleges.Campus')
+            ->get();
 
     if (empty($classrooms)) {
         return [
@@ -1344,16 +1586,25 @@ Route::get("/classrooms-curriculum/{id}/lab", function ($id) {
 });
 
 //GET CLASSROOMS BY SUBJECT
-Route::get("/classrooms-subject/{AY}/{sem}/{id}", function ($AY, $sem, $id) {
+Route::get("/classrooms-subject/{id}/{AY}/{sem}/{c_id}/{YL}/{type}", function ($id, $AY, $sem, $c_id, $YL, $type) {
     $curricula = DB::table('curricula')
+                ->where('curricula.subject_id', $id)
+                ->where('curricula.course_id', $c_id)
                 ->where('curricula.academicYear', $AY)
                 ->where('curricula.semester', $sem)
-                ->where('curricula.subject_id', $id)
+                ->where('curricula.yearLevel', $YL)
                 ->pluck('curricula.classrooms_id')->first();
 
     $ids = json_decode($curricula, true);
 
-    $classroom = Classroom::whereIn('id', $ids)->get();
+    if ($type == "Laboratory")
+        $classroom = Classroom::whereIn('id', $ids)->where('Classroom_Type', 'Laboratory')
+                    ->orderBy('Building_No')
+                    ->orderBy('Classroom_No')->get();
+    else
+        $classroom = Classroom::whereIn('id', $ids)
+                    ->orderBy('Building_No')
+                    ->orderBy('Classroom_No')->get();
 
     if (empty($classroom)) {
         return [
@@ -1440,7 +1691,7 @@ Route::post('/curricula/create', function (Request $request) {
         return [
             "success" => false,
             "response" => [
-                "error" => "Invalid! Subject is already added."
+                "error" => "Invalid! Selected Course is already saved."
             ]
         ];
     }
@@ -2139,6 +2390,71 @@ Route::get('/courses/college/{id}', function (Request $request, $id) {
     ];
 });
 
+
+// GET TOTAL NO. OF CLASSES BY USER
+Route::get('/curricula-totals/{AY}/{sem}/{user}', function ($AY, $sem, $user) {
+    $curricula = DB::table('curricula')
+        ->where('curricula.academicYear', $AY)
+        ->where('curricula.semester', $sem)
+        ->where('curricula.user_id', $user)
+        ->select('curricula.course_id','curricula.yearLevel')
+        ->distinct()
+        ->get();
+
+    $total = 0;
+    $i = 0;
+    $scheds = array();
+
+    foreach($curricula as $c){
+        $yl = "";
+        switch ($c->yearLevel) {
+            case 'First Year':
+                $yl = 'first';
+                break;
+            case 'Second Year':
+                $yl = 'second';
+                break;
+            case 'Third Year':
+                $yl = 'third';
+                break;
+            case 'Fourth Year':
+                $yl = 'fourth';
+                break;
+        }
+        $blocks = DB::table('blocks')
+            ->where('blocks.academicYear', $AY)
+            ->where('blocks.semester', $sem)
+            ->where('blocks.course_id', $c->course_id)
+            ->value('blocks.'.$yl);
+
+        $total = $total + $blocks;
+
+        $schedules = DB::table('schedules')
+            ->where('schedules.academicYear', $AY)
+            ->where('schedules.semester', $sem)
+            ->where('schedules.course_id', $c->course_id)
+            ->where('schedules.yearLevel', $c->yearLevel)
+            ->get(['schedules.id', 'schedules.course_id', 'schedules.yearLevel']);
+            
+        foreach ($schedules as $key) {
+            $scheds[$i] = array(
+                "sched_id" => $key->id,
+                "course_id" => $key->course_id,
+                "yearLevel" => $key->yearLevel,
+                "total" => $total
+            );
+            $i++;
+        }
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "total" => $scheds
+        ]
+    ];
+});
+
 //CREATE RECORD FOR SCHEDULE
 Route::post('/schedules/create', function (Request $request) {
     $data = $request->all();
@@ -2238,10 +2554,13 @@ Route::get("/schedules/view/{id}/{AY}/{sem}", function (Request $request, $id, $
                           ->join('courses', 'schedules.course_id', '=', 'courses.id')
                           ->join('departments', 'courses.department_id', '=', 'departments.id')
                           ->join('colleges', 'departments.college_id', '=', 'colleges.id')
+                          ->join('class_schedules', 'schedules.id', '=', 'class_schedules.schedule_id')
                           ->where('colleges.id', $id)
                           ->select('schedules.*', 'courses.Course_Name', 'courses.Course_Code')
                           ->orderBy('courses.Course_Code')
-                          ->get();
+                          ->orderBy('schedules.block')
+                          ->distinct()
+                          ->get(['schedules.id']);
     
     foreach($schedules as $cs)
     {
@@ -2260,11 +2579,12 @@ Route::get("/schedules/view/{id}/{AY}/{sem}", function (Request $request, $id, $
                 break;
         }
     }
-    // $schedules->ksort();
-    // usort($schedule, function($a, $b)
-    // {
-    //     return strcmp($a->yearLevel, $b->yearLevel);
-    // });\
+    $schedules = json_decode(json_encode($schedules), true);
+    
+   $yearLevel = array();
+   $yearLevel = array_column($schedules, 'yearLevel');
+   array_multisort($yearLevel, SORT_ASC, $schedules);
+
     if (empty($schedules)) {
         return [
             "success" => false,
@@ -2382,11 +2702,14 @@ Route::post('/classschedules/create/{AY}/{sem}', function (Request $request, $AY
         ( ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime'])) AND
             date('H:i', strtotime($schedule['endTime'])) <= date('H:i', strtotime($data['endTime'])) ) OR
 
-        ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime']))  AND
+          ( date('H:i', strtotime($schedule['startTime'])) <= date('H:i', strtotime($data['startTime'])) AND
+            date('H:i', strtotime($schedule['endTime'])) >= date('H:i', strtotime($data['endTime'])) ) OR
+
+          ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime']))  AND
             date('H:i', strtotime($schedule['endTime'])) >= date('H:i', strtotime($data['endTime'])) AND
             date('H:i', strtotime($schedule['startTime'])) < date('H:i', strtotime($data['endTime'])) ) OR
 
-            ( date('H:i', strtotime($schedule['startTime'])) <= date('H:i', strtotime($data['startTime']))  AND
+          ( date('H:i', strtotime($schedule['startTime'])) <= date('H:i', strtotime($data['startTime']))  AND
             date('H:i', strtotime($schedule['endTime'])) > date('H:i', strtotime($data['startTime'])) AND
             date('H:i', strtotime($schedule['endTime'])) <= date('H:i', strtotime($data['endTime'])) ) )
         )
@@ -2444,6 +2767,7 @@ Route::post('/classschedules/create/{AY}/{sem}', function (Request $request, $AY
             "startTime" => $data["startTime"],
             "endTime" => $data["endTime"],
             "subject_id" => $data["subject_id"],
+            "session" => $data["session"],
             "faculty_id" => $data["faculty_id"],
             "classroom_id" => $data["classroom_id"],
             "user_id" => $data["user_id"]
@@ -2490,38 +2814,6 @@ Route::post('/classschedules/create/{AY}/{sem}', function (Request $request, $AY
             ];
         }
     }
-});
-
-Route::get("/curricula/zxc", function (Request $request) {
-    // $json_string = '["2","3"]';
-    // // $json_array = json_decode($json_string);
-    // $pdays = json_decode($json_string,true);
-    // for($i=0; $i<count($pdays); $i++)
-    //     $pd[$i] = explode(",",$pdays[$i]);
-    // for($i = 0; $i < count($pd); $i++){
-    //     for($j = 0; $j < count($pd[$i]); $j++)
-    //         $pd[$i][$j] = (int)$pd[$i][$j];
-    //     sort($pd[$i]);
-    // }
-
-    // $temp = $pd[1];
-    // print_r($pd);
-
-    $myArray = [];
-
-array_push($myArray, (object)[
-        'key1' => 'someValue',
-        'key2' => 'someValue2',
-        'key3' => 'someValue3',
-]);
-array_push($myArray, (object)[
-    'key1' => 'someValue',
-    'key2' => 'someValue2',
-    'key3' => 'someValue3',
-]);
-// return $myArray[0]->key1;
-
-
 });
 
 //GENERATE SCHEDULES FOR A CLASS
@@ -2582,7 +2874,8 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
     // for($i = 0; $i < count($time_period); $i++)
     //     $time_period[$i] = trim($time_period[$i]);
 
-    $classschedules_ = [];
+    $savedCS = array();
+    $isError = false;
 
     class SchedulesErrors
     {
@@ -2592,6 +2885,8 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
     $classschederrors_ = array();
 
     for($i = 0; $i < count($subjects); $i++){
+        $classschederrors_[$i] = new SchedulesErrors();
+
         $d = 0;
 
         $temp_pd = $pd[$i];
@@ -2603,16 +2898,17 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
         $notYetTimeLab = "first";
         $NONELAB = false;
 
+        $startTimeMLec = $startTimeM;
+        $startTimeMLab = $startTimeM;
+        $startTimeALec = $startTimeA;
+        $startTimeALab = $startTimeA;
+
         if($time_period[$i] == "Morning"){
             $startTime = $startTimeM;
-            $startTimeMLec = $startTimeM;
-            $startTimeMLab = $startTimeM;
             $maxTime = "12:00";
         }
         else if($time_period[$i] == "Afternoon"){
             $startTime = $startTimeA;
-            $startTimeALec = $startTimeA;
-            $startTimeALab = $startTimeA;
             $maxTime = "21:00";
         }
 
@@ -2652,7 +2948,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                         $startTime = "13:00";
                         $time_period[$i] = "Afternoon";
                         $startTimeALec = "13:00";
-                        $endTime = date('H:i', strtotime("+$lecc hour", strtotime($startTime)));
+                        $hrs = floor($lecc);
+                        $mins = ($lecc - $hrs) * 60;
+                        $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
                         $maxTime = "21:00";
                     }
                     else if($lecc > 8){
@@ -2702,6 +3000,7 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
             }
         }
         
+        $errorF = 0;$errorC = 0;$errorS = 0;
         $noConflict = null;
         while($lecHours > 0){
             while($d < count($pd[$i])){
@@ -2819,6 +3118,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                     ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
                                         date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
 
+                                        ( date('H:i', strtotime($schedule['startTime'])) <= $startTime AND
+                                        date('H:i', strtotime($schedule['endTime'])) >= $endTime ) OR
+
                                         ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
                                         date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
                                         date('H:i', strtotime($schedule['startTime'])) < $endTime ) OR
@@ -2829,16 +3131,19 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                 )
                                 {   
                                     if(($schedule['faculty_id'] == $faculties[$i])) {
+                                        $errorF++;
                                         $noConflict=true;
                                         break;
                                     }
                                     else if(($schedule['classroom_id'] == $classrooms_lec[$i])) {
+                                        $errorC++;
                                         $noConflict=true;
                                         break;
                                     }
                                     else if(($schedule['schedule_id'] == $data['schedule_id']) AND
                                         ($schedule['faculty_id'] != $faculties[$i]) AND
                                         ($schedule['classroom_id'] != $classrooms_lec[$i])){
+                                        $errorS++;
                                         $noConflict=true;
                                         break;
                                     }
@@ -2851,27 +3156,18 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                             }
                             if($noConflict == false)
                             {
-                                // $classschedule = ClassSchedule::create([
-                                //     "schedule_id" => $data["schedule_id"],
-                                //     "day" => $pd[$i][$d],
-                                //     "startTime" => $startTime,
-                                //     "endTime" => $endTime,
-                                //     "subject_id" => $subjects[$i],
-                                //     "faculty_id" => $faculties[$i],
-                                //     "classroom_id" => $classrooms[$i],
-                                //     "user_id" => $data["user_id"]
-                                // ]);
-
-                                array_push($classschedules_, (object)[
-                                    'schedule_id' => $data["schedule_id"],
-                                    'day' => $pd[$i][$d],
-                                    'startTime' => $startTime,
-                                    'endTime' => $endTime,
-                                    'subject_id' => $subjects[$i],
-                                    'faculty_id' => $faculties[$i],
-                                    'classroom_id' => $classrooms_lec[$i],
-                                    'user_id' => $data["user_id"],
+                                $classschedule = ClassSchedule::create([
+                                    "schedule_id" => $data["schedule_id"],
+                                    "day" => $pd[$i][$d],
+                                    "startTime" => $startTime,
+                                    "endTime" => $endTime,
+                                    "subject_id" => $subjects[$i],
+                                    "session" => "Lecture",
+                                    "faculty_id" => $faculties[$i],
+                                    "classroom_id" => $classrooms_lec[$i],
+                                    "user_id" => $data["user_id"]
                                 ]);
+                                array_push($savedCS, $classschedule->id);
 
                                 $lecHours = $lecHours - $lecc;
                                 break;
@@ -2889,7 +3185,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                 $add = 30;
                                 $startTime = strtotime("+$add minutes", strtotime($startTime));
                                 $startTime = date('H:i', $startTime);
-                                $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                                $hrs = floor($lecc);
+                                $mins = ($lecc - $hrs) * 60;
+                                $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
                                 $endTime = date('H:i', $endTime);
                             }
                         }
@@ -2914,9 +3212,15 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                         $d = 0;
                         $pd[$i] = $temp_pd;
 
-                        $classschederrors_[$i] = new SchedulesErrors();
-                        $classschederrors_[$i]->lecerror = "Unable to find available schedule for the Lecture Session. Please try to change the Faculty or Classroom.";
-                        
+                        if($errorF > $errorC && $errorF > $errorS)
+                            $classschederrors_[$i]->lecerror = "Unable to find available schedule for this Lecture Session. Please try to select another Faculty.";
+                        else if($errorC >= $errorF && $errorC > $errorS)
+                            $classschederrors_[$i]->lecerror = "Unable to find available schedule for this Lecture Session. Please try to select another Classroom.";
+                        else
+                            $classschederrors_[$i]->lecerror = "Unable to find available schedule for the Lecture Session. Please try to split the session.";
+
+                        $isError = true;
+
                         if($time_period[$i] == "Morning"){
                             $startTime = $startTimeM;
                             $maxTime = "12:00";
@@ -3023,7 +3327,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                 $maxTime = "21:00";
                             }
                         }
-                        $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                        $hrs = floor($lecc);
+                        $mins = ($lecc - $hrs) * 60;
+                        $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
                         $endTime = date('H:i', $endTime);
                     }
                     }
@@ -3065,7 +3371,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                         $startTime = "13:00";
                         $time_period[$i] = "Afternoon";
                         $startTimeALec = "13:00";
-                        $endTime = date('H:i', strtotime("+$labb hour", strtotime($startTime)));
+                        $hrs = floor($labb);
+                        $mins = ($labb - $hrs) * 60;
+                        $endTime = date('H:i', strtotime("+$hrs hour +$mins minutes", strtotime($startTime)));
                         $maxTime = "21:00";
                     }
                     else if($labb > 8){
@@ -3127,6 +3435,7 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
         //         $endTime = date('H:i', $endTime);
         //     }
         // }
+        $errorF = 0;$errorC = 0;$errorS = 0;
         $noConflict = null;
         while($labHours > 0){
             while($d < count($pd[$i])){
@@ -3135,10 +3444,13 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                         ->where('schedules.academicYear', $AY)
                                         ->where('schedules.semester', $sem)
                                         ->cursor() as $schedule)
-                    {
+                    { 
                         if( ($schedule['day'] == $pd[$i][$d]) AND
                             ( ( date('H:i', strtotime($schedule['startTime'])) >= $startTime AND
                                 date('H:i', strtotime($schedule['endTime'])) <= $endTime ) OR
+
+                                ( date('H:i', strtotime($schedule['startTime'])) <= $startTime AND
+                                date('H:i', strtotime($schedule['endTime'])) >= $endTime ) OR
 
                                 ( date('H:i', strtotime($schedule['startTime'])) >= $startTime  AND
                                 date('H:i', strtotime($schedule['endTime'])) >= $endTime AND
@@ -3150,16 +3462,19 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                         )
                         {   
                             if(($schedule['faculty_id'] == $faculties[$i])) {
+                                $errorF++;
                                 $noConflict=true;
                                 break;
                             }
                             else if(($schedule['classroom_id'] == $classrooms_lab[$i])) {
+                                $errorC++;
                                 $noConflict=true;
                                 break;
                             }
                             else if(($schedule['schedule_id'] == $data['schedule_id']) AND
                                 ($schedule['faculty_id'] != $faculties[$i]) AND
                                 ($schedule['classroom_id'] != $classrooms_lab[$i])){
+                                $errorS++;
                                 $noConflict=true;
                                 break;
                             }
@@ -3172,27 +3487,18 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                     }
                     if($noConflict == false)
                     {
-                        // $classschedule = ClassSchedule::create([
-                        //     "schedule_id" => $data["schedule_id"],
-                        //     "day" => $pd[$i][$d],
-                        //     "startTime" => $startTime,
-                        //     "endTime" => $endTime,
-                        //     "subject_id" => $subjects[$i],
-                        //     "faculty_id" => $faculties[$i],
-                        //     "classroom_id" => $classrooms[$i],
-                        //     "user_id" => $data["user_id"]
-                        // ]);
-
-                        array_push($classschedules_, (object)[
-                            'schedule_id' => $data["schedule_id"],
-                            'day' => $pd[$i][$d],
-                            'startTime' => $startTime,
-                            'endTime' => $endTime,
-                            'subject_id' => $subjects[$i],
-                            'faculty_id' => $faculties[$i],
-                            'classroom_id' => $classrooms_lab[$i],
-                            'user_id' => $data["user_id"],
+                        $classschedule = ClassSchedule::create([
+                            "schedule_id" => $data["schedule_id"],
+                            "day" => $pd[$i][$d],
+                            "startTime" => $startTime,
+                            "endTime" => $endTime,
+                            "subject_id" => $subjects[$i],
+                            "session" => "Laboratory",
+                            "faculty_id" => $faculties[$i],
+                            "classroom_id" => $classrooms_lab[$i],
+                            "user_id" => $data["user_id"]
                         ]);
+                        array_push($savedCS, $classschedule->id);
 
                         $labHours = $labHours - $labb;
                         break;
@@ -3209,7 +3515,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                         $add = 30;
                         $startTime = strtotime("+$add minutes", strtotime($startTime));
                         $startTime = date('H:i', $startTime);
-                        $endTime = strtotime("+$lecc hour", strtotime($startTime));
+                        $hrs = floor($labb);
+                        $mins = ($labb - $hrs) * 60;
+                        $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
                         $endTime = date('H:i', $endTime);
                     }
                 }
@@ -3225,9 +3533,15 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                         $d = 0;
                         $pd[$i] = $temp_pd;
 
-                        $classschederrors_[$i] = new SchedulesErrors();
-                        $classschederrors_[$i]->laberror = "Unable to find available schedule for the Laboratory Session. Please try to change the Faculty or Classroom.";
+                        if($errorF > $errorC && $errorF > $errorS)
+                            $classschederrors_[$i]->laberror = "Unable to find available schedule for this Laboratory Session. Please try to select another Faculty.";
+                        else if($errorC >= $errorF && $errorC > $errorS)
+                            $classschederrors_[$i]->laberror = "Unable to find available schedule for this Laboratory Session. Please try to select another Classroom.";
+                        else
+                            $classschederrors_[$i]->laberror = "Unable to find available schedule for the Laboratory Session. Please try to split the session.";
                         
+                        $isError = true;
+
                         if($time_period[$i] == "Morning"){
                             $startTime = $startTimeM;
                             $maxTime = "12:00";
@@ -3309,7 +3623,9 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
                                 $maxTime = "21:00";
                             }
                         }
-                        $endTime = strtotime("+$labb hour", strtotime($startTime));
+                        $hrs = floor($labb);
+                        $mins = ($labb - $hrs) * 60;
+                        $endTime = strtotime("+$hrs hour +$mins minutes", strtotime($startTime));
                         $endTime = date('H:i', $endTime);
                     }
                     }
@@ -3560,20 +3876,25 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
         //     } 
         // }
     }
-    
-    if (empty($classschederrors_)) {
-        for($i = 0; $i < count($classschedules_); $i++) {
-            ClassSchedule::create([
-                "schedule_id" => $classschedules_[$i]->schedule_id,
-                "day" => $classschedules_[$i]->day,
-                "startTime" => $classschedules_[$i]->startTime,
-                "endTime" => $classschedules_[$i]->endTime,
-                "subject_id" => $classschedules_[$i]->subject_id,
-                "faculty_id" => $classschedules_[$i]->faculty_id,
-                "classroom_id" => $classschedules_[$i]->classroom_id,
-                "user_id" => $classschedules_[$i]->user_id
-            ]);
+    if ($isError == false) {
+        return [
+            "success" => true,
+            "response" => [
+                "schedulessaved" => false
+            ]
+        ];
+    } else {
+        for($i = 0; $i < count($savedCS); $i++){
+            $classschedule = ClassSchedule::where('id', $savedCS[$i])->delete();
         }
+        return [
+            "success" => false,
+            "response" => [
+                "scheduleserror" => $classschederrors_
+            ]
+        ];
+    }
+    
         // $classschedule = ClassSchedule::create([
         //     "schedule_id" => $data["schedule_id"],
         //     "day" => $pd[$i][$d],
@@ -3584,20 +3905,6 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
         //     "classroom_id" => $classrooms[$i],
         //     "user_id" => $data["user_id"]
         // ]);
-        return [
-            "success" => true,
-            "response" => [
-                "schedulessaved" => $classschedules_
-            ]
-        ];
-    } else {
-        return [
-            "success" => false,
-            "response" => [
-                "scheduleserror" => $classschederrors_
-            ]
-        ];
-    }
     // dump ($startTimeM);
     // print ($startTimeA);
     // dump ($subjects);
@@ -3614,7 +3921,7 @@ Route::post('/classschedules/generate/{AY}/{sem}', function (Request $request, $
 });
 
 //GET CLASS SCHEDULES FOR MERGING (MAJOR)
-Route::get("/classschedules/merging/{s_id}/{c_id}/{yL}/{id}", function ($s_id, $c_id, $yL, $id) {
+Route::get("/classschedules/merging/{s_id}/{c_id}/{yL}/{id}/{AY}/{sem}/{type}", function ($s_id, $c_id, $yL, $id, $AY, $sem, $type) {
     $classschedules = DB::table('class_schedules')
                         ->where('class_schedules.subject_id', $s_id)
                         ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
@@ -3623,7 +3930,10 @@ Route::get("/classschedules/merging/{s_id}/{c_id}/{yL}/{id}", function ($s_id, $
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
                         ->where('schedules.course_id', $c_id)
                         ->where('schedules.yearLevel', $yL)
+                        ->where('schedules.academicYear', $AY)
+                        ->where('schedules.semester', $sem)
                         ->where('class_schedules.schedule_id', '!=',$id)
+                        ->where('class_schedules.session', $type)
                         ->select('class_schedules.id', 'class_schedules.startTime', 'class_schedules.endTime', 'class_schedules.day', 'schedules.block', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No')
                         ->get();
 
@@ -3645,14 +3955,17 @@ Route::get("/classschedules/merging/{s_id}/{c_id}/{yL}/{id}", function ($s_id, $
 });
 
 //GET CLASS SCHEDULES FOR MERGING (MINOR)
-Route::get("/classschedules/merging/{s_id}/{id}", function ($s_id, $id) {
+Route::get("/classschedules/merging/{s_id}/{id}/{AY}/{sem}/{type}", function ($s_id, $id, $AY, $sem, $type) {
     $classschedules = DB::table('class_schedules')
                         ->where('class_schedules.subject_id', $s_id)
                         ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
                         ->join('courses', 'schedules.course_id', '=', 'courses.id')
                         ->join('faculties', 'class_schedules.faculty_id', '=', 'faculties.id')
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
+                        ->where('schedules.academicYear', $AY)
+                        ->where('schedules.semester', $sem)
                         ->where('class_schedules.schedule_id', '!=',$id)
+                        ->where('class_schedules.session', $type)
                         ->select('class_schedules.id','class_schedules.startTime', 'class_schedules.endTime', 'class_schedules.day', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No')
                         ->get();
 
@@ -3694,6 +4007,11 @@ Route::get("/classschedules/class-info/{id}/{AY}/{sem}", function (Request $requ
                         ->join('subjects', 'class_schedules.subject_id', '=', 'subjects.id')
                         ->join('faculties', 'class_schedules.faculty_id', '=', 'faculties.id')
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
+                        ->join('curricula', function ($join) use ($AY, $sem){
+                            $join->on('subjects.id', '=', 'curricula.subject_id')
+                            ->where('curricula.academicYear', $AY)
+                            ->where('curricula.semester', $sem);
+                        })
                         ->select('class_schedules.*', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No')
                         ->get();
 
@@ -3702,24 +4020,27 @@ Route::get("/classschedules/class-info/{id}/{AY}/{sem}", function (Request $requ
 
     foreach($csDistinct as $key => $value){
         $i = 0;
-        $time[$key][$i] = "";
-        $day[$key][$i] = "";
-        $room[$key][$i] = "";
-        $fact[$key][$i] = "";
-        
+        $timeLec[$key][$i] = "";
+        $timeLab[$key][$i] = "";
+        $dayLec[$key][$i] = "";
+        $dayLab[$key][$i] = "";
+        $roomLec[$key][$i] = "";
+        $roomLab[$key][$i] = "";
+        $facultyLec[$key][$i] = "";
+        $facultyLab[$key][$i] = "";
+        $hours[$key][$i] = 0;
+        $hoursLec[$key][$i] = 0;
+        $hoursLab[$key][$i] = 0;
+
         foreach($cs as $key2 => $value2){
             if($value2['subject_id'] == $value['subject_id'])
             {
-                $room[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
-                $fact[$key][$i] = $value2['Faculty_Name'];
-                $time[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
-                // $time[$key] = $time[$key]."\n".substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
                 switch($value2['day']){
                     case "2022-08-01":
                         $d = "M";
                         break;
                     case "2022-08-02":
-                        $d = "T";
+                        $d = "Tu";
                         break;
                     case "2022-08-03":
                         $d = "W";
@@ -3731,53 +4052,154 @@ Route::get("/classschedules/class-info/{id}/{AY}/{sem}", function (Request $requ
                         $d = "F";
                         break;
                     case "2022-08-06":
-                        $d = "S";
+                        $d = "Sa";
                         break;
                     case "2022-08-07":
                         $d = "Su";
                         break;
                 }
-                // $day[$key] = $day[$key]." ".$d;
-                $day[$key][$i] = $d;
+                if($value2['session'] == "Lecture"){
+                    $hoursLec[$key][$i] = (((int)substr($value2['endTime'], 0, 2)*60+(int)substr($value2['endTime'], 3, 2)) - ((int)substr($value2['startTime'], 0, 2)*60+(int)substr($value2['startTime'], 3, 2))) / 60;
+                    $timeLec[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $roomLec[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
+                    $dayLec[$key][$i] = $d;
+                    $facultyLec[$key][$i] = $value2['Faculty_Name'];
+                }
+                else {
+                    $hoursLab[$key][$i] = (((int)substr($value2['endTime'], 0, 2)*60+(int)substr($value2['endTime'], 3, 2)) - ((int)substr($value2['startTime'], 0, 2)*60+(int)substr($value2['startTime'], 3, 2))) / 60;
+                    $timeLab[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $roomLab[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
+                    $dayLab[$key][$i] = $d;
+                    $facultyLab[$key][$i] = $value2['Faculty_Name'];
+                }
+                $hours[$key][$i] = (((int)substr($value2['endTime'], 0, 2)*60+(int)substr($value2['endTime'], 3, 2)) - ((int)substr($value2['startTime'], 0, 2)*60+(int)substr($value2['startTime'], 3, 2))) / 60;
                 $i++;
             }
         }
     }
     foreach($csDistinct as $key => $value){
-        $time[$key] = array_unique($time[$key]);
-        $day[$key] = array_unique($day[$key]);
-        $room[$key] = array_unique($room[$key]);
-        $fact[$key] = array_unique($fact[$key]);
-        // $time = array_values($time[$key]);
-    }
-    
-    // dump($time);
-
-    foreach($csDistinct as $key => $value){
-        $newtime[$key] = "";
-        $newday[$key] = "";
-        $newroom[$key] = "";
-        $newfact[$key] = "";
-        foreach($time[$key] as $kt => $vt){
-            $newtime[$key] = $newtime[$key]."\n".$vt;
-        }
-        foreach($day[$key] as $kd => $vd){
-            $newday[$key] = $newday[$key]." ".$vd;
-        }
-        foreach($room[$key] as $kr => $vr){
-            $newroom[$key] = $newroom[$key]."\n".$vr;
-        }
-        foreach($fact[$key] as $kf => $vf){
-            $newfact[$key] = $newfact[$key]."\n".$vf;
-        }
+        $timeLecc[$key] = $timeLec[$key];
+        $timeLabb[$key] = $timeLab[$key];
+        $timeLec[$key] = array_values(array_filter(array_unique($timeLec[$key])));
+        $timeLab[$key] = array_values(array_filter(array_unique($timeLab[$key])));
+        $roomLec[$key] = array_values(array_filter(array_unique($roomLec[$key])));
+        $roomLab[$key] = array_values(array_filter(array_unique($roomLab[$key])));
+        $facultyLec[$key] = array_values(array_filter(array_unique($facultyLec[$key])));
+        $facultyLab[$key] = array_values(array_filter(array_unique($facultyLab[$key])));
     }
 
     foreach($csDistinct as $key => $value){
+        $newhours[$key] = 0.0;
+        $newhoursLec[$key] = 0.0;
+        $newhoursLab[$key] = 0.0;
+        $newtimeLec[$key] = "";
+        $newtimeLab[$key] = "";
+        $newdayLec[$key] = "";
+        $newdayLab[$key] = "";
+        $newroomLec[$key] = "";
+        $newroomLab[$key] = "";
+        $newfactLec[$key] = "";
+        $newfactLab[$key] = "";
+
+        foreach($hours[$key] as $kh => $vh){
+            $newhours[$key] = $newhours[$key] + $vh;
+        }
+        foreach($hoursLec[$key] as $khlec => $vhlec){
+            $newhoursLec[$key] = $newhoursLec[$key] + $vhlec;
+        }
+        foreach($hoursLab[$key] as $khlab => $vhlab){
+            $newhoursLab[$key] = $newhoursLab[$key] + $vhlab;
+        }
+        foreach($timeLec[$key] as $kt => $vt){
+            $newtimeLec[$key] = $newtimeLec[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLecc[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLc[$i] = $dayLec[$key][$ktl];
+                }
+            $dayLc = array_unique($dayLc);
+            foreach($dayLc as $a => $b)
+                $newdayLec[$key] = $newdayLec[$key].$b." ";
+            $newdayLec[$key] = trim($newdayLec[$key])."\n";
+            $dayLc = [];
+        }
+        foreach($timeLab[$key] as $kt => $vt){
+            $newtimeLab[$key] = $newtimeLab[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLabb[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLb[$i] = $dayLab[$key][$ktl];
+                }
+            $dayLb = array_unique($dayLb);
+            foreach($dayLb as $a => $b)
+                $newdayLab[$key] = $newdayLab[$key].$b." ";
+            if(trim($newdayLab[$key]) != "")
+                $newdayLab[$key] = trim($newdayLab[$key])." *\n";
+            $dayLb = [];
+        }
+        foreach($roomLec[$key] as $kr => $vr){
+            $newroomLec[$key] = $newroomLec[$key]."\n".$vr;
+        }
+        foreach($roomLab[$key] as $kr => $vr){
+            $newroomLab[$key] = $newroomLab[$key]."\n".$vr;
+        }
+        foreach($facultyLec[$key] as $kf => $vf){
+            $newfactLec[$key] = $newfactLec[$key]."\n".$vf;
+        }
+        foreach($facultyLab[$key] as $kf => $vf){
+            $newfactLab[$key] = $newfactLab[$key]."\n".$vf;
+        }
+    }
+
+    foreach($csDistinct as $key => $value){
+        $newline1 = "";
+        $newline2 = "";
+        $newline3 = "";
+        if(!(trim($newtimeLec[$key]) == "" || trim($newtimeLab[$key]) == "")){
+            if(count($roomLec[$key]) > count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+            else if(count($roomLec[$key]) < count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline2 = $newline2."\n";
+                $newline1 = $newline1."\n";
+            }
+            else {
+                $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+            if(count($facultyLec[$key]) > count($timeLec[$key]))
+                $newline3 = $newline3."\n";
+            else if(count($facultyLec[$key]) < count($timeLec[$key]))
+                foreach($timeLec[$key] as $a => $b)
+                    $newline3 = $newline3."\n";
+            else
+                $newline3 = $newline3."\n";
+        }
         $temp = $value;
-        $temp['Time'] = trim($newtime[$key]);
-        $temp['Day'] = substr($newday[$key], 1);
-        $temp['Room'] = trim($newroom[$key]);
-        $temp['Faculty'] = trim($newfact[$key]);
+        if(count($roomLec[$key]) == 1 && count($roomLab[$key]) == 1)
+            if(trim($newroomLec[$key]) == trim($newroomLab[$key]))
+                $temp['Room'] = trim($newroomLec[$key]);
+            else
+                $temp['Room'] = trim($newroomLec[$key]).$newline2.trim($newroomLab[$key]);
+        else
+            $temp['Room'] = trim($newroomLec[$key]).$newline2.trim($newroomLab[$key]);
+        if(count($facultyLec[$key]) == 1 && count($facultyLab[$key]) == 1)
+            if(trim($newfactLec[$key]) == trim($newfactLab[$key]))
+                $temp['Faculty'] = trim($newfactLec[$key]);
+            else
+                $temp['Faculty'] = trim($newfactLec[$key]).$newline3.trim($newfactLab[$key]);
+        else
+            $temp['Faculty'] = trim($newfactLec[$key]).$newline3.trim($newfactLab[$key]);
+        $temp['Hours'] = $newhours[$key];
+        $temp['HoursLec'] = $newhoursLec[$key];
+        $temp['HoursLab'] = $newhoursLab[$key];
+        $temp['Time'] = trim($newtimeLec[$key]).$newline1.trim($newtimeLab[$key]);
+        $temp['Day'] = trim($newdayLec[$key]).$newline1.trim($newdayLab[$key]);
         $csDistinct[$key] = $temp;
     }
 
@@ -3823,6 +4245,11 @@ Route::get("/classschedules/class-info-user/{id}/{AY}/{sem}/{user}", function (R
                         ->join('subjects', 'class_schedules.subject_id', '=', 'subjects.id')
                         ->join('faculties', 'class_schedules.faculty_id', '=', 'faculties.id')
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
+                        ->join('curricula', function ($join) use ($AY, $sem){
+                            $join->on('subjects.id', '=', 'curricula.subject_id')
+                            ->where('curricula.academicYear', $AY)
+                            ->where('curricula.semester', $sem);
+                        })
                         ->select('class_schedules.*', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No')
                         ->get();
 
@@ -3831,24 +4258,27 @@ Route::get("/classschedules/class-info-user/{id}/{AY}/{sem}/{user}", function (R
 
     foreach($csDistinct as $key => $value){
         $i = 0;
-        $time[$key][$i] = "";
-        $day[$key][$i] = "";
-        $room[$key][$i] = "";
-        $fact[$key][$i] = "";
-        
+        $timeLec[$key][$i] = "";
+        $timeLab[$key][$i] = "";
+        $dayLec[$key][$i] = "";
+        $dayLab[$key][$i] = "";
+        $roomLec[$key][$i] = "";
+        $roomLab[$key][$i] = "";
+        $facultyLec[$key][$i] = "";
+        $facultyLab[$key][$i] = "";
+        $hours[$key][$i] = 0;
+        $hoursLec[$key][$i] = 0;
+        $hoursLab[$key][$i] = 0;
+
         foreach($cs as $key2 => $value2){
             if($value2['subject_id'] == $value['subject_id'])
             {
-                $room[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
-                $fact[$key][$i] = $value2['Faculty_Name'];
-                $time[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
-                // $time[$key] = $time[$key]."\n".substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
                 switch($value2['day']){
                     case "2022-08-01":
                         $d = "M";
                         break;
                     case "2022-08-02":
-                        $d = "T";
+                        $d = "Tu";
                         break;
                     case "2022-08-03":
                         $d = "W";
@@ -3860,53 +4290,154 @@ Route::get("/classschedules/class-info-user/{id}/{AY}/{sem}/{user}", function (R
                         $d = "F";
                         break;
                     case "2022-08-06":
-                        $d = "S";
+                        $d = "Sa";
                         break;
                     case "2022-08-07":
                         $d = "Su";
                         break;
                 }
-                // $day[$key] = $day[$key]." ".$d;
-                $day[$key][$i] = $d;
+                if($value2['session'] == "Lecture"){
+                    $hoursLec[$key][$i] = (((int)substr($value2['endTime'], 0, 2)*60+(int)substr($value2['endTime'], 3, 2)) - ((int)substr($value2['startTime'], 0, 2)*60+(int)substr($value2['startTime'], 3, 2))) / 60;
+                    $timeLec[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $roomLec[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
+                    $dayLec[$key][$i] = $d;
+                    $facultyLec[$key][$i] = $value2['Faculty_Name'];
+                }
+                else {
+                    $hoursLab[$key][$i] = (((int)substr($value2['endTime'], 0, 2)*60+(int)substr($value2['endTime'], 3, 2)) - ((int)substr($value2['startTime'], 0, 2)*60+(int)substr($value2['startTime'], 3, 2))) / 60;
+                    $timeLab[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $roomLab[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
+                    $dayLab[$key][$i] = $d;
+                    $facultyLab[$key][$i] = $value2['Faculty_Name'];
+                }
+                $hours[$key][$i] = (((int)substr($value2['endTime'], 0, 2)*60+(int)substr($value2['endTime'], 3, 2)) - ((int)substr($value2['startTime'], 0, 2)*60+(int)substr($value2['startTime'], 3, 2))) / 60;
                 $i++;
             }
         }
     }
     foreach($csDistinct as $key => $value){
-        $time[$key] = array_unique($time[$key]);
-        $day[$key] = array_unique($day[$key]);
-        $room[$key] = array_unique($room[$key]);
-        $fact[$key] = array_unique($fact[$key]);
-        // $time = array_values($time[$key]);
-    }
-    
-    // dump($time);
-
-    foreach($csDistinct as $key => $value){
-        $newtime[$key] = "";
-        $newday[$key] = "";
-        $newroom[$key] = "";
-        $newfact[$key] = "";
-        foreach($time[$key] as $kt => $vt){
-            $newtime[$key] = $newtime[$key]."\n".$vt;
-        }
-        foreach($day[$key] as $kd => $vd){
-            $newday[$key] = $newday[$key]." ".$vd;
-        }
-        foreach($room[$key] as $kr => $vr){
-            $newroom[$key] = $newroom[$key]."\n".$vr;
-        }
-        foreach($fact[$key] as $kf => $vf){
-            $newfact[$key] = $newfact[$key]."\n".$vf;
-        }
+        $timeLecc[$key] = $timeLec[$key];
+        $timeLabb[$key] = $timeLab[$key];
+        $timeLec[$key] = array_values(array_filter(array_unique($timeLec[$key])));
+        $timeLab[$key] = array_values(array_filter(array_unique($timeLab[$key])));
+        $roomLec[$key] = array_values(array_filter(array_unique($roomLec[$key])));
+        $roomLab[$key] = array_values(array_filter(array_unique($roomLab[$key])));
+        $facultyLec[$key] = array_values(array_filter(array_unique($facultyLec[$key])));
+        $facultyLab[$key] = array_values(array_filter(array_unique($facultyLab[$key])));
     }
 
     foreach($csDistinct as $key => $value){
+        $newhours[$key] = 0.0;
+        $newhoursLec[$key] = 0.0;
+        $newhoursLab[$key] = 0.0;
+        $newtimeLec[$key] = "";
+        $newtimeLab[$key] = "";
+        $newdayLec[$key] = "";
+        $newdayLab[$key] = "";
+        $newroomLec[$key] = "";
+        $newroomLab[$key] = "";
+        $newfactLec[$key] = "";
+        $newfactLab[$key] = "";
+
+        foreach($hours[$key] as $kh => $vh){
+            $newhours[$key] = $newhours[$key] + $vh;
+        }
+        foreach($hoursLec[$key] as $khlec => $vhlec){
+            $newhoursLec[$key] = $newhoursLec[$key] + $vhlec;
+        }
+        foreach($hoursLab[$key] as $khlab => $vhlab){
+            $newhoursLab[$key] = $newhoursLab[$key] + $vhlab;
+        }
+        foreach($timeLec[$key] as $kt => $vt){
+            $newtimeLec[$key] = $newtimeLec[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLecc[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLc[$i] = $dayLec[$key][$ktl];
+                }
+            $dayLc = array_unique($dayLc);
+            foreach($dayLc as $a => $b)
+                $newdayLec[$key] = $newdayLec[$key].$b." ";
+            $newdayLec[$key] = trim($newdayLec[$key])."\n";
+            $dayLc = [];
+        }
+        foreach($timeLab[$key] as $kt => $vt){
+            $newtimeLab[$key] = $newtimeLab[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLabb[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLb[$i] = $dayLab[$key][$ktl];
+                }
+            $dayLb = array_unique($dayLb);
+            foreach($dayLb as $a => $b)
+                $newdayLab[$key] = $newdayLab[$key].$b." ";
+            if(trim($newdayLab[$key]) != "")
+                $newdayLab[$key] = trim($newdayLab[$key])." *\n";
+            $dayLb = [];
+        }
+        foreach($roomLec[$key] as $kr => $vr){
+            $newroomLec[$key] = $newroomLec[$key]."\n".$vr;
+        }
+        foreach($roomLab[$key] as $kr => $vr){
+            $newroomLab[$key] = $newroomLab[$key]."\n".$vr;
+        }
+        foreach($facultyLec[$key] as $kf => $vf){
+            $newfactLec[$key] = $newfactLec[$key]."\n".$vf;
+        }
+        foreach($facultyLab[$key] as $kf => $vf){
+            $newfactLab[$key] = $newfactLab[$key]."\n".$vf;
+        }
+    }
+
+    foreach($csDistinct as $key => $value){
+        $newline1 = "";
+        $newline2 = "";
+        $newline3 = "";
+        if(!(trim($newtimeLec[$key]) == "" || trim($newtimeLab[$key]) == "")){
+            if(count($roomLec[$key]) > count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+            else if(count($roomLec[$key]) < count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline2 = $newline2."\n";
+                $newline1 = $newline1."\n";
+            }
+            else {
+                $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+            if(count($facultyLec[$key]) > count($timeLec[$key]))
+                $newline3 = $newline3."\n";
+            else if(count($facultyLec[$key]) < count($timeLec[$key]))
+                foreach($timeLec[$key] as $a => $b)
+                    $newline3 = $newline3."\n";
+            else
+                $newline3 = $newline3."\n";
+        }
         $temp = $value;
-        $temp['Time'] = trim($newtime[$key]);
-        $temp['Day'] = substr($newday[$key], 1);
-        $temp['Room'] = trim($newroom[$key]);
-        $temp['Faculty'] = trim($newfact[$key]);
+        if(count($roomLec[$key]) == 1 && count($roomLab[$key]) == 1)
+            if(trim($newroomLec[$key]) == trim($newroomLab[$key]))
+                $temp['Room'] = trim($newroomLec[$key]);
+            else
+                $temp['Room'] = trim($newroomLec[$key]).$newline2.trim($newroomLab[$key]);
+        else
+            $temp['Room'] = trim($newroomLec[$key]).$newline2.trim($newroomLab[$key]);
+        if(count($facultyLec[$key]) == 1 && count($facultyLab[$key]) == 1)
+            if(trim($newfactLec[$key]) == trim($newfactLab[$key]))
+                $temp['Faculty'] = trim($newfactLec[$key]);
+            else
+                $temp['Faculty'] = trim($newfactLec[$key]).$newline3.trim($newfactLab[$key]);
+        else
+            $temp['Faculty'] = trim($newfactLec[$key]).$newline3.trim($newfactLab[$key]);
+        $temp['Hours'] = $newhours[$key];
+        $temp['HoursLec'] = $newhoursLec[$key];
+        $temp['HoursLab'] = $newhoursLab[$key];
+        $temp['Time'] = trim($newtimeLec[$key]).$newline1.trim($newtimeLab[$key]);
+        $temp['Day'] = trim($newdayLec[$key]).$newline1.trim($newdayLab[$key]);
         $csDistinct[$key] = $temp;
     }
 
@@ -3936,8 +4467,36 @@ Route::get("/classschedules/class/{id}", function (Request $request, $id) {
                         ->join('subjects', 'class_schedules.subject_id', '=', 'subjects.id')
                         ->join('faculties', 'class_schedules.faculty_id', '=', 'faculties.id')
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
-                        ->select('class_schedules.*', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No')
+                        ->join('curricula', 'class_schedules.subject_id', '=', 'curricula.subject_id')
+                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'curricula.lec', 'curricula.lab')
                         ->get();
+
+        foreach($classschedules as $cs)
+        {
+            switch($cs->day){
+                case "2022-08-01":
+                    $cs->dayy = "Monday";
+                    break;
+                case "2022-08-02":
+                    $cs->dayy = "Tuesday";
+                    break;
+                case "2022-08-03":
+                    $cs->dayy = "Wednesday";
+                    break;
+                case "2022-08-04":
+                    $cs->dayy = "Thursday";
+                    break;
+                case "2022-08-05":
+                    $cs->dayy = "Friday";
+                    break;
+                case "2022-08-06":
+                    $cs->dayy = "Saturday";
+                    break;
+                case "2022-08-07":
+                    $cs->dayy = "Sunday";
+                    break;
+            }
+        }
 
     if (empty($classschedules)) {
         return [
@@ -4034,22 +4593,22 @@ Route::get("/classschedules/faculty-info/{id}/{AY}/{sem}", function (Request $re
 
     foreach($csDistinct as $key => $value){
         $i = 0;
-        $time[$key][$i] = "";
-        $day[$key][$i] = "";
-        $room[$key][$i] = "";
+        $timeLec[$key][$i] = "";
+        $timeLab[$key][$i] = "";
+        $dayLec[$key][$i] = "";
+        $dayLab[$key][$i] = "";
+        $roomLec[$key][$i] = "";
+        $roomLab[$key][$i] = "";
         
         foreach($cs as $key2 => $value2){
             if($value2['subject_id'] == $value['subject_id'] && $value2['yearLevel'] == $value['yearLevel'] && $value2['block'] == $value['block'])
             {
-                $room[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
-                $time[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
-                // $time[$key] = $time[$key]."\n".substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
                 switch($value2['day']){
                     case "2022-08-01":
                         $d = "M";
                         break;
                     case "2022-08-02":
-                        $d = "T";
+                        $d = "Tu";
                         break;
                     case "2022-08-03":
                         $d = "W";
@@ -4061,43 +4620,108 @@ Route::get("/classschedules/faculty-info/{id}/{AY}/{sem}", function (Request $re
                         $d = "F";
                         break;
                     case "2022-08-06":
-                        $d = "S";
+                        $d = "Sa";
                         break;
                     case "2022-08-07":
                         $d = "Su";
                         break;
                 }
-                $day[$key][$i] = $d;
+                if($value2['session'] == "Lecture"){
+                    $timeLec[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $roomLec[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
+                    $dayLec[$key][$i] = $d;
+                }
+                else {
+                    $timeLab[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $roomLab[$key][$i] = $value2['Building_No']."-".$value2['Classroom_No'];
+                    $dayLab[$key][$i] = $d;
+                }
                 $i++;
             }
         }
     }
     foreach($csDistinct as $key => $value){
-        $time[$key] = array_unique($time[$key]);
-        $day[$key] = array_unique($day[$key]);
-        $room[$key] = array_unique($room[$key]);
+        $timeLecc[$key] = $timeLec[$key];
+        $timeLabb[$key] = $timeLab[$key];
+        $timeLec[$key] = array_values(array_filter(array_unique($timeLec[$key])));
+        $timeLab[$key] = array_values(array_filter(array_unique($timeLab[$key])));
+        $roomLec[$key] = array_values(array_filter(array_unique($roomLec[$key])));
+        $roomLab[$key] = array_values(array_filter(array_unique($roomLab[$key])));
+    }
+    
+    foreach($csDistinct as $key => $value){
+        $newtimeLec[$key] = "";
+        $newtimeLab[$key] = "";
+        $newdayLec[$key] = "";
+        $newdayLab[$key] = "";
+        $newroomLec[$key] = "";
+        $newroomLab[$key] = "";
+        foreach($timeLec[$key] as $kt => $vt){
+            $newtimeLec[$key] = $newtimeLec[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLecc[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLc[$i] = $dayLec[$key][$ktl];
+                }
+            $dayLc = array_unique($dayLc);
+            foreach($dayLc as $a => $b)
+                $newdayLec[$key] = $newdayLec[$key].$b." ";
+            $newdayLec[$key] = trim($newdayLec[$key])."\n";
+            $dayLc = [];
+        }
+        foreach($timeLab[$key] as $kt => $vt){
+            $newtimeLab[$key] = $newtimeLab[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLabb[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLb[$i] = $dayLab[$key][$ktl];
+                }
+            $dayLb = array_unique($dayLb);
+            foreach($dayLb as $a => $b)
+                $newdayLab[$key] = $newdayLab[$key].$b." ";
+            if(trim($newdayLab[$key]) != "")
+                $newdayLab[$key] = trim($newdayLab[$key])." *\n";
+            $dayLb = [];
+        }
+        foreach($roomLec[$key] as $kr => $vr){
+            $newroomLec[$key] = $newroomLec[$key]."\n".$vr;
+        }
+        foreach($roomLab[$key] as $kr => $vr){
+            $newroomLab[$key] = $newroomLab[$key]."\n".$vr;
+        }
     }
 
     foreach($csDistinct as $key => $value){
-        $newtime[$key] = "";
-        $newday[$key] = "";
-        $newroom[$key] = "";
-        foreach($time[$key] as $kt => $vt){
-            $newtime[$key] = $newtime[$key]."\n".$vt;
+        $newline1 = "";
+        $newline2 = "";
+        if(!(trim($newtimeLec[$key]) == "" || trim($newtimeLab[$key]) == "")){
+            if(count($roomLec[$key]) > count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+            else if(count($roomLec[$key]) < count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline2 = $newline2."\n";
+                $newline1 = $newline1."\n";
+            }
+            else {
+                $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
         }
-        foreach($day[$key] as $kd => $vd){
-            $newday[$key] = $newday[$key]." ".$vd;
-        }
-        foreach($room[$key] as $kr => $vr){
-            $newroom[$key] = $newroom[$key]."\n".$vr;
-        }
-    }
-
-    foreach($csDistinct as $key => $value){
         $temp = $value;
-        $temp['Time'] = trim($newtime[$key]);
-        $temp['Day'] = substr($newday[$key], 1);
-        $temp['Room'] = trim($newroom[$key]);
+        if(count($roomLec[$key]) == 1 && count($roomLab[$key]) == 1)
+            if(trim($newroomLec[$key]) == trim($newroomLab[$key]))
+                $temp['Room'] = trim($newroomLec[$key]);
+            else
+                $temp['Room'] = trim($newroomLec[$key]).$newline2.trim($newroomLab[$key]);
+        else
+            $temp['Room'] = trim($newroomLec[$key]).$newline2.trim($newroomLab[$key]);
+        $temp['Time'] = trim($newtimeLec[$key]).$newline1.trim($newtimeLab[$key]);
+        $temp['Day'] = trim($newdayLec[$key]).$newline1.trim($newdayLab[$key]);
         $temp['Class'] = $value['Course_Code']." ".$value['yearLevel']."-".$value['block'];
         $csDistinct[$key] = $temp;
     }
@@ -4137,7 +4761,7 @@ Route::get("/classschedules/faculty/{id}/{AY}/{sem}", function (Request $request
                         ->where('schedules.academicYear', $AY)
                         ->where('schedules.semester', $sem)
                         ->where('faculties.id', '=', $id)
-                        ->select('class_schedules.*', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'curricula.lec', 'curricula.lab')
+                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'curricula.lec', 'curricula.lab')
                         ->get();
 
     foreach($classschedules as $cs)
@@ -4154,6 +4778,29 @@ Route::get("/classschedules/faculty/{id}/{AY}/{sem}", function (Request $request
                 break;
             case "Fourth Year":
                 $cs->yearLevel = 4;
+                break;
+        }
+        switch($cs->day){
+            case "2022-08-01":
+                $cs->dayy = "Monday";
+                break;
+            case "2022-08-02":
+                $cs->dayy = "Tuesday";
+                break;
+            case "2022-08-03":
+                $cs->dayy = "Wednesday";
+                break;
+            case "2022-08-04":
+                $cs->dayy = "Thursday";
+                break;
+            case "2022-08-05":
+                $cs->dayy = "Friday";
+                break;
+            case "2022-08-06":
+                $cs->dayy = "Saturday";
+                break;
+            case "2022-08-07":
+                $cs->dayy = "Sunday";
                 break;
         }
     }
@@ -4253,22 +4900,22 @@ Route::get("/classschedules/classroom-info/{id}/{AY}/{sem}", function (Request $
 
     foreach($csDistinct as $key => $value){
     $i = 0;
-    $time[$key][$i] = "";
-    $day[$key][$i] = "";
-    $faculty[$key][$i] = "";
+    $timeLec[$key][$i] = "";
+    $timeLab[$key][$i] = "";
+    $dayLec[$key][$i] = "";
+    $dayLab[$key][$i] = "";
+    $facultyLec[$key][$i] = "";
+    $facultyLab[$key][$i] = "";
 
         foreach($cs as $key2 => $value2){
             if($value2['subject_id'] == $value['subject_id'] && $value2['yearLevel'] == $value['yearLevel'] && $value2['block'] == $value['block'])
             {
-                $faculty[$key][$i] = $value2['Faculty_Name'];
-                $time[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
-                // $time[$key] = $time[$key]."\n".substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
                 switch($value2['day']){
                     case "2022-08-01":
                         $d = "M";
                         break;
                     case "2022-08-02":
-                        $d = "T";
+                        $d = "Tu";
                         break;
                     case "2022-08-03":
                         $d = "W";
@@ -4280,44 +4927,109 @@ Route::get("/classschedules/classroom-info/{id}/{AY}/{sem}", function (Request $
                         $d = "F";
                         break;
                     case "2022-08-06":
-                        $d = "S";
+                        $d = "Sa";
                         break;
                     case "2022-08-07":
                         $d = "Su";
                         break;
                 }
-                $day[$key][$i] = $d;
+                if($value2['session'] == "Lecture"){
+                    $timeLec[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $dayLec[$key][$i] = $d;
+                    $facultyLec[$key][$i] = $value2['Faculty_Name'];
+                }
+                else {
+                    $timeLab[$key][$i] = substr($value2['startTime'], 0, -3)."-".substr($value2['endTime'], 0, -3);
+                    $dayLab[$key][$i] = $d;
+                    $facultyLab[$key][$i] = $value2['Faculty_Name'];
+                }
                 $i++;
             }
         }
     }
 
     foreach($csDistinct as $key => $value){
-        $time[$key] = array_unique($time[$key]);
-        $day[$key] = array_unique($day[$key]);
-        $faculty[$key] = array_unique($faculty[$key]);
+        $timeLecc[$key] = $timeLec[$key];
+        $timeLabb[$key] = $timeLab[$key];
+        $timeLec[$key] = array_values(array_filter(array_unique($timeLec[$key])));
+        $timeLab[$key] = array_values(array_filter(array_unique($timeLab[$key])));
+        $facultyLec[$key] = array_values(array_filter(array_unique($facultyLec[$key])));
+        $facultyLab[$key] = array_values(array_filter(array_unique($facultyLab[$key])));
     }
 
     foreach($csDistinct as $key => $value){
-        $newtime[$key] = "";
-        $newday[$key] = "";
-        $newfact[$key] = "";
-        foreach($time[$key] as $kt => $vt){
-            $newtime[$key] = $newtime[$key]."\n".$vt;
+        $newfactLec[$key] = "";
+        $newfactLab[$key] = "";
+        $newtimeLec[$key] = "";
+        $newtimeLab[$key] = "";
+        $newdayLec[$key] = "";
+        $newdayLab[$key] = "";
+        foreach($timeLec[$key] as $kt => $vt){
+            $newtimeLec[$key] = $newtimeLec[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLecc[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLc[$i] = $dayLec[$key][$ktl];
+                }
+            $dayLc = array_unique($dayLc);
+            foreach($dayLc as $a => $b)
+                $newdayLec[$key] = $newdayLec[$key].$b." ";
+            $newdayLec[$key] = trim($newdayLec[$key])."\n";
+            $dayLc = [];
         }
-        foreach($day[$key] as $kd => $vd){
-            $newday[$key] = $newday[$key]." ".$vd;
+        foreach($timeLab[$key] as $kt => $vt){
+            $newtimeLab[$key] = $newtimeLab[$key]."\n".$vt;
+            $i=0;
+            foreach($timeLabb[$key] as $ktl => $vtl)
+                if($vtl == $vt){
+                    $i++;
+                    $dayLb[$i] = $dayLab[$key][$ktl];
+                }
+            $dayLb = array_unique($dayLb);
+            foreach($dayLb as $a => $b)
+                $newdayLab[$key] = $newdayLab[$key].$b." ";
+            if(trim($newdayLab[$key]) != "")
+                $newdayLab[$key] = trim($newdayLab[$key])." *\n";
+            $dayLb = [];
         }
-        foreach($faculty[$key] as $kr => $vr){
-            $newfact[$key] = $newfact[$key]."\n".$vr;
+        foreach($facultyLec[$key] as $kr => $vr){
+            $newfactLec[$key] = $newfactLec[$key]."\n".$vr;
+        }
+        foreach($facultyLab[$key] as $kr => $vr){
+            $newfactLab[$key] = $newfactLab[$key]."\n".$vr;
         }
     }
 
     foreach($csDistinct as $key => $value){
+        $newline1 = "";
+        $newline2 = "";
+        if(!(trim($newtimeLec[$key]) == "" || trim($newtimeLab[$key]) == "")){
+            if(count($facultyLec[$key]) > count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+            else if(count($facultyLec[$key]) < count($timeLec[$key])){
+                foreach($timeLec[$key] as $a => $b)
+                    $newline2 = $newline2."\n";
+                $newline1 = $newline1."\n";
+            }
+            else {
+                $newline1 = $newline1."\n";
+                $newline2 = $newline2."\n";
+            }
+        }
         $temp = $value;
-        $temp['Time'] = trim($newtime[$key]);
-        $temp['Day'] = substr($newday[$key], 1);
-        $temp['Faculty'] = trim($newfact[$key]);
+        if(count($facultyLec[$key]) == 1 && count($facultyLab[$key]) == 1)
+            if(trim($newfactLec[$key]) == trim($newfactLab[$key]))
+                $temp['Faculty'] = trim($newfactLec[$key]);
+            else
+                $temp['Faculty'] = trim($newfactLec[$key]).$newline2.trim($newfactLab[$key]);
+        else
+            $temp['Faculty'] = trim($newfactLec[$key]).$newline2.trim($newfactLab[$key]);
+        $temp['Time'] = trim($newtimeLec[$key]).$newline1.trim($newtimeLab[$key]);
+        $temp['Day'] = trim($newdayLec[$key]).$newline1.trim($newdayLab[$key]);
         $temp['Class'] = $value['Course_Code']." ".$value['yearLevel']."-".$value['block'];
         $csDistinct[$key] = $temp;
     }
@@ -4357,7 +5069,7 @@ Route::get("/classschedules/classroom/{id}/{AY}/{sem}", function (Request $reque
                         ->where('schedules.academicYear', $AY)
                         ->where('schedules.semester', $sem)
                         ->where('classrooms.id', '=', $id)
-                        ->select('class_schedules.*', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'curricula.lec', 'curricula.lab')
+                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'curricula.lec', 'curricula.lab')
                         ->get();
 
     foreach($classschedules as $cs)
@@ -4374,6 +5086,29 @@ Route::get("/classschedules/classroom/{id}/{AY}/{sem}", function (Request $reque
                 break;
             case "Fourth Year":
                 $cs->yearLevel = 4;
+                break;
+        }
+        switch($cs->day){
+            case "2022-08-01":
+                $cs->dayy = "Monday";
+                break;
+            case "2022-08-02":
+                $cs->dayy = "Tuesday";
+                break;
+            case "2022-08-03":
+                $cs->dayy = "Wednesday";
+                break;
+            case "2022-08-04":
+                $cs->dayy = "Thursday";
+                break;
+            case "2022-08-05":
+                $cs->dayy = "Friday";
+                break;
+            case "2022-08-06":
+                $cs->dayy = "Saturday";
+                break;
+            case "2022-08-07":
+                $cs->dayy = "Sunday";
                 break;
         }
     }
@@ -4400,7 +5135,7 @@ Route::get("/classschedules/{id}", function (Request $request, $id) {
     $classschedule = DB::table('class_schedules')
                     ->where('class_schedules.id', $id)
                     ->join('subjects', 'class_schedules.subject_id', '=', 'subjects.id')
-                    ->select('class_schedules.startTime', 'class_schedules.endTime', 'class_schedules.day', 'subjects.Subject_Type', 'class_schedules.subject_id', 'class_schedules.faculty_id', 'class_schedules.classroom_id')
+                    ->select('class_schedules.session', 'class_schedules.startTime', 'class_schedules.endTime', 'class_schedules.day', 'subjects.Subject_Type', 'class_schedules.subject_id', 'class_schedules.faculty_id', 'class_schedules.classroom_id')
                     ->first();
 
     // $classschedule = $classschedules->find($id);
@@ -4514,6 +5249,9 @@ Route::put('/classschedules/update/{id}/{AY}/{sem}', function (Request $request,
                     if( ($schedule['day'] == $data['day']) AND 
                         ( ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime'])) AND
                         date('H:i', strtotime($schedule['endTime'])) <= date('H:i', strtotime($data['endTime'])) ) OR
+
+                        ( date('H:i', strtotime($schedule['startTime'])) <= date('H:i', strtotime($data['startTime'])) AND
+                        date('H:i', strtotime($schedule['endTime'])) >= date('H:i', strtotime($data['endTime'])) ) OR
             
                         ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime']))  AND
                         date('H:i', strtotime($schedule['endTime'])) >= date('H:i', strtotime($data['endTime'])) AND
@@ -4692,182 +5430,93 @@ Route::delete('/classschedules/delete-all/{sched}/{user}', function ($sched, $us
 });
 
 //MERGING OF CLASS SCHEDULES
-Route::put('/classschedules/merge/{id}/{id2}', function (Request $request, $id, $id2) {
+Route::put('/classschedules/merge/{id}/{id2}/{AY}/{sem}', function (Request $request, $id, $id2, $AY, $sem) {
     $data = $request->all();
     $noConflict = null;
     $conflict = null;
 
-    // $schedules = ClassSchedule::chunkById(100, function($schedules) use ($data, $i, $count, $noConflict){
+    foreach (ClassSchedule::join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
+            ->where('schedules.academicYear', $AY)
+            ->where('schedules.semester', $sem)
+            ->cursor() as $schedule) {
 
-        foreach (ClassSchedule::cursor() as $schedule) {
-            if($schedule['id'] <> $id && $schedule['id'] <> $id2){
-                if( ($schedule['day'] == $data['day2']) AND 
-                    ((($schedule['startTime'] <= $data['startTime2']) AND
-                    ($schedule['endTime'] > $data['startTime2'])) OR
-                    (($schedule['startTime'] < $data['endTime2']) AND
-                    ($schedule['endTime'] >= $data['endTime2'])))
-                )
-                {
-                    if(($schedule['faculty_id'] == $data['faculty_id2'])) {
-                        $noConflict=true;
-                        $conflict = 1;
-                        // return [
-                        //     "success" => false,
-                        //     "response" => [
-                        //         "error" => "Selected Faculty is not available on that time."
-                        //     ]
-                        // ];
-                        return false;
-                            
-                    }
-                    else if(($schedule['classroom_id'] == $data['classroom_id2'])) {
-                        $noConflict=true;
-                        $conflict = 2;
-                        // return [
-                        //     "success" => false,
-                        //     "response" => [
-                        //         "error" => "Selected Classroom is already occupied."
-                        //     ]
-                        // ];
-                        return false;
-                    }
-                    else if(($schedule['schedule_id'] == $data['schedule_id2']) AND
-                            ($schedule['faculty_id'] != $data['faculty_id2']) AND
-                            ($schedule['classroom_id'] != $data['classroom_id2'])){
-                        $noConflict=true;
-                        $conflict = 3;
-                        // return [
-                        //     "success" => false,
-                        //     "response" => [
-                        //         "error" => "This Schedule is not available for this Class."
-                        //     ]
-                        // ];
-                        return false;
-                    }
-                    else {
-                        $noConflict=false;
-                    }
-                } else{
+        if($schedule['id'] <> (int)$data['schedule_id2']){
+            if( ($schedule['day'] == $data['day']) AND 
+            ( ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime'])) AND
+            date('H:i', strtotime($schedule['endTime'])) <= date('H:i', strtotime($data['endTime'])) ) OR
+
+            ( date('H:i', strtotime($schedule['startTime'])) >= date('H:i', strtotime($data['startTime']))  AND
+            date('H:i', strtotime($schedule['endTime'])) >= date('H:i', strtotime($data['endTime'])) AND
+            date('H:i', strtotime($schedule['startTime'])) < date('H:i', strtotime($data['endTime'])) ) OR
+
+            ( date('H:i', strtotime($schedule['startTime'])) <= date('H:i', strtotime($data['startTime']))  AND
+            date('H:i', strtotime($schedule['endTime'])) > date('H:i', strtotime($data['startTime'])) AND
+            date('H:i', strtotime($schedule['endTime'])) <= date('H:i', strtotime($data['endTime'])) ) )
+        )
+            {
+                if(($schedule['faculty_id'] == $data['faculty_id'])) {
+                    $noConflict=true;
+                    $conflict = 1;
+                    break;
+                        
+                }
+                else if(($schedule['classroom_id'] == $data['classroom_id'])) {
+                    $noConflict=true;
+                    $conflict = 2;
+                    break;
+                }
+                else if(($schedule['schedule_id'] == $data['schedule_id']) AND
+                        ($schedule['faculty_id'] != $data['faculty_id']) AND
+                        ($schedule['classroom_id'] != $data['classroom_id'])){
+                    $noConflict=true;
+                    $conflict = 3;
+                    break;
+                }
+                else {
                     $noConflict=false;
                 }
+            } else{
+                $noConflict=false;
             }
         }
+    }
 
     if($noConflict == false)
     {
-        // $classschedule = ClassSchedule::find($id);
-
-        // foreach ($data as $key => $value) {
-        //     $classschedule->{$key} = $value;
-        // }
-
-        // $result = $classschedule->save();
-
-        // return ["success" => $result, "response" => ["classschedule" => $classschedule]];
-
         $classschedule = DB::table('class_schedules')
                             ->where('id', $id)
-                            ->update(['day' => $data['day2'],
-                                      'startTime' => $data['startTime2'],
-                                      'endTime' => $data['endTime2'],
-                                      'subject_id' => $data['subject_id2'],
-                                      'faculty_id' => $data['faculty_id2'],
-                                      'classroom_id' => $data['classroom_id2']]);
+                            ->update(['day' => $data['day'],
+                                      'startTime' => $data['startTime'],
+                                      'endTime' => $data['endTime'],
+                                      'subject_id' => $data['subject_id'],
+                                      'faculty_id' => $data['faculty_id'],
+                                      'classroom_id' => $data['classroom_id']]);
 
         return ["success" => true, "response" => ["classschedule" => $classschedule]];
-        
     } else {
-        foreach (ClassSchedule::cursor() as $schedule) {
-            if($schedule['id'] <> $id && $schedule['id'] <> $id2){
-                if( ($schedule['day'] == $data['day']) AND 
-                    ((($schedule['startTime'] <= $data['startTime']) AND
-                    ($schedule['endTime'] > $data['startTime'])) OR
-                    (($schedule['startTime'] < $data['endTime']) AND
-                    ($schedule['endTime'] >= $data['endTime'])))
-                )
-                {
-                    if(($schedule['faculty_id'] == $data['faculty_id'])) {
-                        $noConflict=true;
-                        $conflict = 1;
-                        // return [
-                        //     "success" => false,
-                        //     "response" => [
-                        //         "error" => "Selected Faculty is not available on that time."
-                        //     ]
-                        // ];
-                        return false;
-                            
-                    }
-                    else if(($schedule['classroom_id'] == $data['classroom_id'])) {
-                        $noConflict=true;
-                        $conflict = 2;
-                        // return [
-                        //     "success" => false,
-                        //     "response" => [
-                        //         "error" => "Selected Classroom is already occupied."
-                        //     ]
-                        // ];
-                        return false;
-                    }
-                    else if(($schedule['schedule_id'] == $data['schedule_id']) AND
-                            ($schedule['faculty_id'] != $data['faculty_id']) AND
-                            ($schedule['classroom_id'] != $data['classroom_id'])){
-                        $noConflict=true;
-                        $conflict = 3;
-                        // return [
-                        //     "success" => false,
-                        //     "response" => [
-                        //         "error" => "This Schedule is not available for this Class."
-                        //     ]
-                        // ];
-                        return false;
-                    }
-                    else {
-                        $noConflict=false;
-                    }
-                } else{
-                    $noConflict=false;
-                }
-            }
+        if($conflict == 1) {
+            return [
+                "success" => false,
+                "response" => [
+                    "error" => "Merging can't be done. The Faculty of the selected Class is not available for this schedule."
+                ]
+            ];
         }
-        if($noConflict == false)
-        {
-            $classschedule = DB::table('class_schedules')
-                                ->where('id', $id2)
-                                ->update(['day' => $data['day'],
-                                        'startTime' => $data['startTime'],
-                                        'endTime' => $data['endTime'],
-                                        'subject_id' => $data['subject_id'],
-                                        'faculty_id' => $data['faculty_id'],
-                                        'classroom_id' => $data['classroom_id']]);
-
-            return ["success" => true, "response" => ["classschedule" => $classschedule]];
+        else if ($conflict == 2) {
+            return [
+                "success" => false,
+                "response" => [
+                    "error" => "Merging can't be done. The Classroom of the selected Class is not available for this schedule."
+                ]
+            ];
         }
-        else {
-            if($conflict == 1) {
-                return [
-                    "success" => false,
-                    "response" => [
-                        "error" => "Merging can't be done. The Faculty of the selected Class is not available for this schedule."
-                    ]
-                ];
-            }
-            else if ($conflict == 2) {
-                return [
-                    "success" => false,
-                    "response" => [
-                        "error" => "Merging can't be done. The Classroom of the selected Class is not available for this schedule."
-                    ]
-                ];
-            }
-            else if ($conflict == 3) {
-                return [
-                    "success" => false,
-                    "response" => [
-                        "error" => "Merging can't be done. This Schedule is not available on the selected Class Schedule."
-                    ]
-                ];
-            }
+        else if ($conflict == 3) {
+            return [
+                "success" => false,
+                "response" => [
+                    "error" => "Merging can't be done. The selected schedule is already occupied for this Class."
+                ]
+            ];
         }
     }
 });

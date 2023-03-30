@@ -1,24 +1,24 @@
 <template>
         <header class="bg-white shadow">
             <div
-                class="max-w-7xl mx-auto py-3 px-4 text-center sm:px-6 lg:px-8"
+                class="max-w-screen mx-auto py-3 text-center"
             >
-                <h1 v-if="userType == 'reg'" class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-sky-900">
+                <h1 v-if="userType == 'reg'" class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-[#253B80]">
                     UPDATE & MANAGING OF FACULTY OF {{ college.College_Name }}
                 </h1>
-                <h1 v-else class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-sky-900">
+                <h1 v-else class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-[#253B80]">
                     UPDATE & MANAGING OF FACULTY OF {{ college.Department_Name }}
                 </h1>
             </div>
         </header>
         <main>
-            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="max-w-[90vw] mx-auto py-2">
                 <!-- Replace with your content -->
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="col-span-1 mt-5 md:mt-0">
+                    <div class="col-span-1">
                         <form v-if="userType == 'reg'" class="form" @submit.prevent="AddNewFaculty()">
-                            <div class="shadow overflow-hidden sm:rounded-md">
-                                <div class="px-4 py-5 bg-white sm:p-6">
+                            <div class="shadow overflow-hidden rounded-md">
+                                <div class="bg-white p-5">
                                     <div class="grid grid-cols-4 gap-6">
 
                                         <div class="col-span-6">
@@ -145,8 +145,8 @@
                             </div>
                         </form>
                         <form v-else class="form" @submit.prevent="AddNewFacultyDept()">
-                            <div class="shadow overflow-hidden sm:rounded-md">
-                                <div class="px-4 py-5 bg-white sm:p-6">
+                            <div class="shadow overflow-hidden rounded-md">
+                                <div class="bg-white p-5">
                                     <div class="grid grid-cols-4 gap-6">
 
                                         <div class="col-span-6">
@@ -238,10 +238,10 @@
                     <div class="col-span-2">
                         <div class="flex flex-col">
                             <div
-                                class="-my-2 overflow-x-auto h-96 sm:-mx-6 lg:-mx-8"
+                                class="overflow-auto h-auto max-h-[82vh]"
                             >
                                 <div
-                                    class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8"
+                                    class="align-middle inline-block min-w-full p-px pb-1 pr-1"
                                 >
                                     <div
                                         class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg"
@@ -382,11 +382,11 @@
                                                         >
                                                     </td>
                                                 </tr>
-                                                <tr class="EmptyFaculties" v-else>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">No Record of Faculties.</td>
-                                                </tr>
                                             </tbody>
                                         </table>
+                                        <div class="EmptyFaculties p-2" v-if="facultyList.length <= 0">
+                                            <span class="pl-4 whitespace-nowrap text-sm font-roboto tracking-wide text-[#253B80]">No Records of Faculties.</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->time('startTime');
             $table->time('endTime');
             $table->foreignId('subject_id')->constrained();
+            $table->string('session', 15);
             $table->foreignId('faculty_id')->constrained();
             $table->foreignId('classroom_id')->constrained();
             $table->foreignId('user_id')->constrained();

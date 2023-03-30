@@ -11,7 +11,7 @@
 
     <header class="bg-white shadow">
         <div class="flex items-center flex-row py-2">
-            <h1 class="w-3/5 lg:text-xl md:text-lg text-right uppercase lg:font-extrabold md:font-bold text-sky-900">
+            <h1 class="w-3/5 lg:text-xl md:text-lg text-right uppercase lg:font-extrabold md:font-bold text-[#253B80]">
                 Update and Managing of Curriculum
             </h1>
             <div class="flex justify-center w-2/5">
@@ -28,17 +28,16 @@
                     <option disabled value="" class="text-center">-- Semester --</option>
                     <option value="First Semester" class="text-sky-600 text-justify">First Semester</option>
                     <option value="Second Semester" class="text-sky-600 text-justify">Second Semester</option> -->
-                    <option value="Mid Semester / Summer" class="text-sky-600 text-justify">Mid Semester / Summer</option> -->
+                    <option value="Mid Semester | Summer" class="text-sky-600 text-justify">Mid Semester / Summer</option> -->
                 </select>
             </div>
         </div>
     </header>
     <main>
-        <div class="max-w-full mx-auto py-2.5 xs:px-4 sm:px-6 lg:px-8">
+        <div class="2xl:max-w-[90vw] xl:max-w-[92vw] lg:max-w-[96vw] mx-auto py-1.5">
             <form v-if="userType == 'reg'" class="form" @submit.prevent="">
-            <div class="grid grid-cols-9 gap-4">
-                <div class="col-span-1"></div>
-                <div class="col-span-3">
+            <div class="grid grid-cols-11 gap-4">
+                <div class="col-span-4">
                     <select
                         v-if="!h$.$invalid"
                         v-model="v$.selectedCollege.$model"
@@ -65,7 +64,7 @@
                         <option disabled value="" class="text-center">-- Select a College Department --</option>
                     </select>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-5">
                     <select
                         v-if="!h$.$invalid"
                         v-model="v$.selectedCourse.$model"
@@ -92,32 +91,31 @@
                         <option disabled value="" class="text-center">-- Select a Degree Program --</option>
                     </select>
                 </div>
-                <div class="ml-2 col-span-2">
+                <div class="col-span-2">
                     <button
                         v-if="(v$.$invalid || viewcurr2 == false)"
                         disabled
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
                         Manage Curriculum
                     </button>
                     <button
                         v-else-if="!(viewcurr1 == true || viewcurr2 == true)"
                         disabled
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
                         Manage Curriculum
                     </button>
                     <button
                         v-else
                         type="submit"
                         @click="curr = true, viewcurr1 = false, viewcurr2 = false, curriculumId = false, reset(), fetchCurricula(), fetchGECSubjectsByCollege()"
-                        class="h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
+                        class="h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
                         Manage Curriculum
                     </button>
                 </div>
             </div>
             </form>
             <form v-else class="form" @submit.prevent="">
-            <div class="grid grid-cols-12 gap-4" v-if="SubjectTypeDept2 == ''">
-                <div class="col-span-1"></div>
+            <div class="grid grid-cols-10 gap-4" v-if="SubjectTypeDept2 == ''">
                 <div class="col-span-2">
                     <select
                         v-if="!h$.$invalid"
@@ -258,7 +256,7 @@
                     >
                     </select>
                 </div>
-                <div class="ml-2 col-span-2" v-if="SubjectTypeDept == 'Major'">
+                <div class="col-span-2" v-if="SubjectTypeDept == 'Major'">
                     <button
                         v-if="z$.$invalid"
                         disabled
@@ -279,7 +277,7 @@
                         Manage Curriculum
                     </button>
                 </div>
-                <div class="ml-2 col-span-2" v-else-if="SubjectTypeDept == 'Core'">
+                <div class="col-span-2" v-else-if="SubjectTypeDept == 'Core'">
                     <button
                         v-if="(v$.$invalid || viewcurr2 == false)"
                         disabled
@@ -300,7 +298,7 @@
                         Manage Curriculum
                     </button>
                 </div>
-                <div class="ml-2 col-span-2" v-else>
+                <div class="col-span-2" v-else>
                     <button
                         disabled
                         class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
@@ -308,9 +306,8 @@
                     </button>
                 </div>
             </div>
-            <div class="grid grid-cols-9 gap-4" v-else-if="SubjectTypeDept2 == 'Major'">
-                <div class="col-span-1"></div>
-                <div class="col-span-3">
+            <div class="grid grid-cols-11 gap-4" v-else-if="SubjectTypeDept2 == 'Major'">
+                <div class="col-span-6">
                     <select
                         v-if="!h$.$invalid"
                         v-model="z$.selectedCourse.$model"
@@ -337,7 +334,7 @@
                         <option disabled value="" class="text-center">-- Select a Degree Program --</option>
                     </select>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-3">
                     <select
                         v-if="!h$.$invalid"
                         required
@@ -361,32 +358,30 @@
                         <option disabled value="" class="text-center">-- Select a Year Level --</option>
                     </select>
                 </div>
-                <div class="ml-2 col-span-2">
+                <div class="col-span-2">
                     <button
                         v-if="z$.$invalid"
                         disabled
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
                         Manage Curriculum
                     </button>
                     <button
                         v-else-if="!(viewcurr2 == true || viewcurr1 == true)"
                         disabled
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
                         Manage Curriculum
                     </button>
                     <button
                         v-else
                         type="submit"
                         @click="curr = true, viewcurr2 = false, viewcurr1 = false, curriculumId = false, reset(); fetchCurriculaD()"
-                        class="h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
+                        class="h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
                         Manage Curriculum
                     </button>
                 </div>
-                <div class="col-span-1"></div>
             </div>
-            <div class="grid grid-cols-9 gap-4" v-else-if="SubjectTypeDept2 == 'Core'">
-                <div class="col-span-1"></div>
-                <div class="col-span-3">
+            <div class="grid grid-cols-11 gap-4" v-else-if="SubjectTypeDept2 == 'Core'">
+                <div class="col-span-4">
                     <select
                         v-if="!h$.$invalid"
                         v-model="v$.selectedCollege.$model"
@@ -413,7 +408,7 @@
                         <option disabled value="" class="text-center">-- Select a College Department --</option>
                     </select>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-5">
                     <select
                         v-if="!h$.$invalid"
                         v-model="v$.selectedCourse.$model"
@@ -441,39 +436,38 @@
                         <option disabled value="" class="text-center">-- Select a Degree Program --</option>
                     </select>
                 </div>
-                <div class="ml-2 col-span-2">
+                <div class="col-span-2">
                     <button
                         v-if="(v$.$invalid || viewcurr2 == false)"
                         disabled
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm uppercase font-extrabold rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm uppercase font-extrabold rounded-lg text-white bg-orange-400">
                         Manage Curriculum
                     </button>
                     <button
                         v-else-if="!(viewcurr2 == true || viewcurr1 == true)"
                         disabled
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm uppercase font-extrabold rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm uppercase font-extrabold rounded-lg text-white bg-orange-400">
                         Manage Curriculum
                     </button>
                     <button
                         v-else
                         type="submit"
                         @click="curr = true, viewcurr2 = false, viewcurr1 = false, curriculumId = false, reset(); fetchCurriculaCore(); fetchCoreSubjectsByDepartment()"
-                        class="h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm uppercase font-extrabold rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
+                        class="h-full border border-transparent w-full shadow-sm text-sm uppercase font-extrabold rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
                         Manage Curriculum
                     </button>
                 </div>
-                <div class="col-span-1"></div>
             </div>
             </form>
         </div>
 
-        <div class="max-w-screen-2xl mx-auto py-2 sm:px-6 lg:px-14">
+        <div class="max-w-[95vw] mx-auto py-px">
                 <!-- Replace with your content -->
             <div class="grid grid-cols-4 gap-4">
-                <div class="col-span-1 mt-5 md:mt-0">
+                <div class="col-span-1">
                     <form v-if="curr == true && (userType == 'reg' || (userType == 'dept' && (SubjectTypeDept2 == 'Core' || SubjectTypeDept == 'Core')))" class="form" @submit.prevent="AddNewCurriculum()">
-                        <div class="shadow sm:rounded-md">
-                            <div class="overflow-y-auto h-96 px-4 py-5 bg-white sm:p-6">
+                        <div class="shadow rounded-md">
+                            <div class="overflow-x-auto h-auto max-h-[69vh] bg-white p-4">
                                 <div class="grid grid-cols-4 gap-6">
                                     <div class="col-span-6">
                                         <label
@@ -616,21 +610,21 @@
 
                                     <div class="col-span-6">
                                         <div class="relative">
-                                        <label
-                                            for="faculty"
-                                            class="text-sm font-medium text-gray-700"
-                                            >Faculty
-                                        </label>
-                                        <button v-if="curriculumId == false" @click.prevent="addFaculty()" class="absolute top-1 lg:right-3 md:right-2 xl:right-5">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 fill-sky-500 hover:fill-sky-700">
-                                                <path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zM2.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 018 18a9.953 9.953 0 01-5.385-1.572zM16.25 5.75a.75.75 0 00-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2z" />
-                                            </svg>
-                                        </button>
-                                        <button v-else disabled class="absolute top-1 lg:right-3 md:right-2 xl:right-5">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="cursor-not-allowed w-5 h-5 fill-gray-500">
-                                                <path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zM2.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 018 18a9.953 9.953 0 01-5.385-1.572zM16.25 5.75a.75.75 0 00-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2z" />
-                                            </svg>
-                                        </button>
+                                            <label
+                                                for="faculty"
+                                                class="text-sm font-medium text-gray-700"
+                                                >Faculty
+                                            </label>
+                                            <button v-if="curriculumId == false" @click.prevent="addFaculty()" class="absolute top-1 lg:right-3 md:right-2 xl:right-5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 fill-sky-500 hover:fill-sky-700">
+                                                    <path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zM2.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 018 18a9.953 9.953 0 01-5.385-1.572zM16.25 5.75a.75.75 0 00-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2z" />
+                                                </svg>
+                                            </button>
+                                            <button v-else disabled class="absolute top-1 lg:right-3 md:right-2 xl:right-5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="cursor-not-allowed w-5 h-5 fill-gray-500">
+                                                    <path d="M11 5a3 3 0 11-6 0 3 3 0 016 0zM2.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 018 18a9.953 9.953 0 01-5.385-1.572zM16.25 5.75a.75.75 0 00-1.5 0v2h-2a.75.75 0 000 1.5h2v2a.75.75 0 001.5 0v-2h2a.75.75 0 000-1.5h-2v-2z" />
+                                                </svg>
+                                            </button>
                                         </div>
                                         <div class="relative" v-for="(fact, index) in faculties" :key="index">
                                             <select
@@ -759,8 +753,8 @@
                         </div>
                     </form>
                     <form v-else-if="curr == true && userType =='dept'" class="form" @submit.prevent="AddNewCurriculum()">
-                        <div class="shadow sm:rounded-md">
-                            <div class="overflow-y-auto h-96 px-4 py-5 bg-white sm:p-6">
+                        <div class="shadow rounded-md">
+                            <div class="overflow-x-auto h-auto max-h-[69vh] bg-white p-4">
                                 <div class="grid grid-cols-4 gap-6">
                                     <div class="col-span-6">
                                         <label
@@ -1028,10 +1022,10 @@
                 <div :class="(userType == 'reg' || (userType == 'dept' && (SubjectTypeDept2 == 'Core' || SubjectTypeDept == 'Core'))) ? 'col-span-2' : 'col-span-3'">
                     <div v-if="curr == true" class="flex flex-col">
                         <div
-                            class="-my-2 overflow-x-auto h-96 -mx-2"
+                            class="overflow-auto h-auto max-h-[67vh]"
                         >
                             <div
-                                class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8"
+                                class="align-middle inline-block min-w-full p-px pb-1 pr-1"
                             >
                                 <div
                                     class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg"
@@ -1268,22 +1262,22 @@
                                                     >
                                                 </td>
                                             </tr>
-                                            <tr class="EmptyCurricula" v-else>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">No Record of Curriculum for this Degree Program.</td>
-                                            </tr>
                                         </tbody>
                                     </table>
+                                    <div class="EmptyCurricula p-2" v-if="curriculumList.length <= 0">
+                                        <span class="pl-4 whitespace-nowrap text-sm font-roboto tracking-wide text-[#253B80]">No Records for this Curriculum.</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div v-if="(currList == true && (userType == 'reg' || (userType == 'dept' && (SubjectTypeDept2 == 'Core' || SubjectTypeDept == 'Core'))))" class="col-span-1">
-                    <div class="shadow overflow-hidden h-96 overflow-y-scroll overflow-x-scroll border-b border-gray-200 sm:rounded-lg">
+                    <div class="shadow overflow-auto h-auto max-h-[77vh] border-b border-gray-200 rounded-lg">
                         <table
-                            class="table-auto min-w-full  divide-y divide-gray-200"
+                            class="table-auto min-w-full divide-y divide-gray-200"
                         >
-                            <caption class="bg-gray-50 py-3 text-center pl-3 text-xs font-medium text-gray-500 uppercase">Saved Curriculums</caption>
+                            <caption class="bg-gray-50 py-3 text-center text-xs font-medium text-gray-500 uppercase">Saved Curriculums</caption>
                             <thead class="bg-gray-50">
                                 
                             </thead>
@@ -1303,20 +1297,20 @@
                                         {{ list.Course_Name }}
                                     </td>
                                 </tr>
-                                <tr class="EmptyCurricula" v-else>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">No Record of Curriculum for this Degree Program.</td>
-                                </tr>
                             </tbody>
                         </table>
+                        <div class="EmptyCurricula p-2 text-center" v-if="curriculaList.length <= 0">
+                            <span class="whitespace-nowrap text-sm font-roboto tracking-wide text-[#253B80]">No Records of Curriculum for this Degree Program.</span>
+                        </div>
                     </div>
                 </div>
             </div>
             <!-- /End replace -->
             <!-- FacultyModal -->
-            <div v-if="showModal" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
-                <div class="relative w-auto my-6 mx-auto max-w-fit">
+            <div v-if="showModal" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+                <div class="relative w-auto my-6 mx-auto min-w-[30vw] max-w-[80vw]">
                     <!--content-->
-                    <div class="border-0 rounded-lg drop-shadow-2xl relative opacity-90 flex flex-col w-96 bg-white outline-none focus:outline-none">
+                    <div class="border-0 rounded-lg drop-shadow-2xl relative opacity-90 flex flex-col w-full bg-white outline-none focus:outline-none">
                     <!--header-->
                     <div class="flex items-start justify-between py-2 px-4 border-b border-solid border-slate-200 rounded-t">
                         <span v-if = "(userType == 'reg' || (userType == 'dept' && (SubjectTypeDept2 == 'Core' || SubjectTypeDept == 'Core')))"
@@ -1334,7 +1328,7 @@
                         </button>
                     </div>
                     <!--body-->
-                    <div class="overflow-y-auto h-32 relative px-5 pb-2  flex-auto">
+                    <div class="overflow-auto h-auto max-h-[50vh] relative px-5 pb-2 flex-auto">
                         <div class="relative">
                             <label
                                 for="faculty"
@@ -1380,10 +1374,10 @@
             </div>
             <div v-if="showModal" class="opacity-25 fixed inset-0 z-40 bg-slate-600"></div>
             <!-- ClassroomModal -->
-            <div v-if="showModalC" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
-                <div class="relative w-auto my-6 mx-auto max-w-fit">
+            <div v-if="showModalC" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+                <div class="relative w-auto my-6 mx-auto min-w-[30vw] max-w-[80vw]">
                     <!--content-->
-                    <div class="border-0 rounded-lg drop-shadow-2xl relative opacity-90 flex flex-col w-96 bg-white outline-none focus:outline-none">
+                    <div class="border-0 rounded-lg drop-shadow-2xl relative opacity-90 flex flex-col w-full bg-white outline-none focus:outline-none">
                     <!--header-->
                     <div class="flex items-start justify-between py-2 px-4 border-b border-solid border-slate-200 rounded-t">
                         <span v-if = "(userType == 'reg' || (userType == 'dept' && (SubjectTypeDept2 == 'Core' || SubjectTypeDept == 'Core')))"
@@ -1401,7 +1395,7 @@
                         </button>
                     </div>
                     <!--body-->
-                    <div class="overflow-y-auto h-32 relative px-5 pb-2  flex-auto">
+                    <div class="overflow-y-auto h-auto max-h-[50vh] relative px-5 pb-2 flex-auto">
                         <div class="relative">
                             <label
                                 for="faculty"
@@ -1492,13 +1486,14 @@ export default {
         }
         const toggleAYSem = () => {
             if(!h$.value.$invalid){
-                if(userType == 'reg')
+                if(userType == 'reg'){
+                    courseList.value = [];
                     fetchCurriculaList();
+                }
                 else
                     fetchCurriculaListCore();
                 currList.value = true;
-            }
-                
+            } 
         }
         
         const initialState = {
@@ -1689,10 +1684,16 @@ export default {
         }
 
         const FetchClassrooms = async (id) => {
-            classroomList.value = await APIController.FetchClassroomsPerCollegeBySubject(id);
+            if(localStorage.getItem('userType') == "reg")
+                classroomList.value = await APIController.FetchClassroomsPerCollegeBySubject(id, "Lecture");
+            else
+                classroomList.value = await APIController.FetchClassroomsPerCollegeBySubject(id, "Both");
         }
         const FetchClassroomsModal = async (id) => {
-            classroomList.value = await APIController.FetchClassroomsPerCollegeBySubject(id);
+            if(localStorage.getItem('userType') == "reg")
+                classroomList.value = await APIController.FetchClassroomsPerCollegeBySubject(id, "Lecture");
+            else
+                classroomList.value = await APIController.FetchClassroomsPerCollegeBySubject(id, "Both");
         }
 
         const GetCountSubjects = async (id) => {
@@ -1754,6 +1755,8 @@ export default {
                     if(tempCurriculum){
                         faculties.value = [{faculty: ''}],
                         classrooms.value = [{classroom: ''}],
+                        faculties_id.value = [],
+                        classrooms_id.value = [],
                         fetchCurricula(),
                         fetchGECSubjectsByCollege(),
                         reset();
@@ -1765,6 +1768,8 @@ export default {
                         if(tempCurriculum){
                             faculties.value = [{faculty: ''}],
                             classrooms.value = [{classroom: ''}],
+                            faculties_id.value = [],
+                            classrooms_id.value = [],
                             fetchCurriculaCore(),
                             fetchCoreSubjectsByDepartment();
                             fetchCurriculaListCore();
@@ -1776,6 +1781,8 @@ export default {
                         if(tempCurriculum){
                             faculties.value = [{faculty: ''}],
                             classrooms.value = [{classroom: ''}],
+                            faculties_id.value = [],
+                            classrooms_id.value = [],
                             fetchCurriculaD(),
                             reset();
                         }
@@ -1794,6 +1801,8 @@ export default {
                     curriculumId.value = false;
                     facultiesModal.value = [{faculty: ''}];
                     classroomsModal.value = [{classroom: ''}];
+                    faculties_idModal.value = [];
+                    classrooms_idModal.value = [];
                 }
             } else {
                 if(SubjectTypeDept2.value == 'Core' || SubjectTypeDept.value == 'Core'){
@@ -1805,6 +1814,8 @@ export default {
                         curriculumId.value = false;
                         facultiesModal.value = [{faculty: ''}];
                         classroomsModal.value = [{classroom: ''}];
+                        faculties_idModal.value = [];
+                        classrooms_idModal.value = [];
                     }
                 }
                 else {
@@ -1814,6 +1825,8 @@ export default {
                         curriculumId.value = false;
                         facultiesModal.value = [{faculty: ''}];
                         classroomsModal.value = [{classroom: ''}];
+                        faculties_idModal.value = [];
+                        classrooms_idModal.value = [];
                     }
                 }
             }

@@ -11,32 +11,32 @@
 
     <header class="bg-white shadow">
         <div class="flex items-center flex-row py-2">
-            <h1 class="w-3/5 lg:text-xl md:text-lg text-right uppercase lg:font-extrabold md:font-bold text-sky-900">
+            <h1 class="w-3/5 lg:text-xl md:text-lg text-right uppercase lg:font-extrabold md:font-bold text-[#253B80]">
                 Class Scheduler System with Recommender Engine
             </h1>
             <div class="flex justify-center w-2/5">
                 <select v-model="h$.selectedAcademicYear.$model"
                         @change="toggleAYSem(), resetModel(), sched = false"
-                        required class="invalid:border-orange-600 invalid:text-orange-600 focus:invalid:border-orange-600 focus:invalid:ring-orange-600 h-7.5 w-max text-sky-800 border border-sky-700 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-600 focus:border-sky-600 text-xs">
+                        required class="invalid:border-orange-500 invalid:text-orange-500 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-7.5 w-max text-sky-500 border border-sky-500 bg-transparent rounded-lg shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 text-xs">
                     <option disabled value="" class="text-center">-- Academic Year --</option>
                     <option value="A.Y. 2022 - 2023" class="text-sky-600 text-justify">A.Y. 2022 - 2023</option>
                     <option value="A.Y. 2023 - 2024" class="text-sky-600 text-justify">A.Y. 2023 - 2024</option> -->
                 </select>
                 <select v-model="h$.selectedSemester.$model"
                         @change="toggleAYSem(), resetModel(), sched = false"
-                        required class="ml-2 invalid:border-orange-600 invalid:text-orange-600 focus:invalid:border-orange-600 focus:invalid:ring-orange-600 h-7.5 w-max text-sky-800 border border-sky-700 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-600 focus:border-sky-600 text-xs">
+                        required class="ml-2 invalid:border-orange-500 invalid:text-orange-500 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-7.5 w-max text-sky-500 border border-sky-500 bg-transparent rounded-lg shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 text-xs">
                     <option disabled value="" class="text-center">-- Semester --</option>
                     <option value="First Semester" class="text-sky-600 text-justify">First Semester</option>
                     <option value="Second Semester" class="text-sky-600 text-justify">Second Semester</option> -->
-                    <option value="Mid Semester / Summer" class="text-sky-600 text-justify">Mid Semester / Summer</option> -->
+                    <option value="Mid Semester_Summer" class="text-sky-600 text-justify">Mid Semester / Summer</option> -->
                 </select>
             </div>
         </div>
     </header>
     <main>
-        <div class="max-w-full py-2.5 md:px-4 sm:px-2 2xl:px-12 xl:px-9 lg:px-6">
+        <div class="max-w-[90vw] mx-auto py-2.5">
             <form class="form" @submit.prevent="AddSchedule()">
-            <div class="grid grid-cols-11 gap-2">
+            <div class="grid grid-cols-12 gap-2">
                 <div class="col-span-4">
                     <select
                         v-if="!h$.$invalid"
@@ -64,7 +64,7 @@
                         <option disabled value="" class="text-center">-- Select a College Department --</option>
                     </select>
                 </div>
-                <div class="col-span-3">
+                <div class="col-span-4">
                     <select
                         v-if="!h$.$invalid"
                         v-model="v$.selectedCourse.$model"
@@ -97,7 +97,7 @@
                         v-model="v$.selectedYearLevel.$model"
                         @keyup="v$.selectedYearLevel.$touch()"
                         @blur="v$.selectedYearLevel.$touch()"
-                        @change="viewsched3 = true, sched = false"
+                        @change="fetchBlock(onChangeYearLevel($event)), viewsched3 = true, sched = false"
                         required
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
@@ -129,9 +129,10 @@
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
                         <option disabled value="" class="text-center">--Block--</option>
-                        <option value="A" class="text-sky-600 text-center">A</option>
-                        <option value="B" class="text-sky-600 text-center">B</option>
-                        <option value="C" class="text-sky-600 text-center">C</option>
+                        <option v-if="block >= 1" value="A" class="text-sky-600 text-center">A</option>
+                        <option v-if="block >= 2" value="B" class="text-sky-600 text-center">B</option>
+                        <option v-if="block >= 3" value="C" class="text-sky-600 text-center">C</option>
+                        <option v-if="block >= 4" value="D" class="text-sky-600 text-center">D</option>
                     </select>
                     <select
                         v-else
@@ -146,21 +147,21 @@
                         v-if="v$.$invalid"
                         disabled
                         type="submit"
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
                         Manage Schedule
                     </button>
                     <button
                         v-else-if="!(viewsched1 == true || viewsched2 == true || viewsched3 == true || viewsched4 == true)"
                         disabled
                         type="submit"
-                        class="cursor-not-allowed h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
+                        class="cursor-not-allowed h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white bg-orange-400">
                         Manage Schedule
                     </button>
                     <button
                         v-else
-                        @click="cancel(), viewsched1 = false, viewsched2 = false, viewsched3 = false, viewsched4 = false, viewSchedule = 'class'"
+                        @click="resetStartTime(), cancel(), viewsched1 = false, viewsched2 = false, viewsched3 = false, viewsched4 = false, viewSchedule = 'class', events = []"
                         type="submit"
-                        class="h-full border border-transparent 2xl:w-9/12 xl:w-10/12 lg:w-11/12 shadow-sm text-sm font-extrabold uppercase rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
+                        class="h-full border border-transparent w-full shadow-sm text-sm font-extrabold uppercase rounded-lg text-white hover:text-cyan-200 bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-600">
                         Manage Schedule
                     </button>
                 </div>
@@ -168,25 +169,57 @@
             </form>
         </div>
 
-        <div v-if="sched == false" class="max-w-full py-10 sm:px-24">
-          <div class="text-center text-2xl font-mono font-black text-zinc-600 pt-40 border-4 border-dashed border-gray-200 rounded-lg h-96">
-              All of the save records on the Curriculum will be shown here in the Class Scheduler.
-          </div>
-        </div>
-        <div v-else class="max-w-full mx-auto pb-6 xs:px-px sm:px-1 lg:px-6 grid grid-cols-4">
+        <div v-if="sched == false && loading1 == false" class="max-w-[90vw] mx-auto my-[3vh] grid grid-cols-6 gap-x-5">
+            <div class="col-span-3 border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
+                <canvas id="myChart"></canvas>
+                <div v-if="showClasses" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+                    <div class="relative w-auto mx-auto">
+                        <!--content-->
+                        <div class="border-0 rounded-lg shadow-lg relative bg-white flex flex-col w-full outline-none focus:outline-none">
+                            <!--header-->
+                            <div class="flex flex-row items-center justify-between py-2 px-4 border-b border-solid rounded-t">
+                                <span class="text-sm text-[#253B80] font-roboto uppercase">LIST OF CLASSES {{ legendLabel }}
+                                </span>
+                                <!-- <span class="text-gray-400 hover:text-gray-600 font-roboto text-lg mb-1">
+                                    <button class="bg-transparent" v-on:click="showClasses = false">x</button>
+                                </span> -->
+                            </div>
+                            <div class="overflow-auto w-auto max-w-[80vw] h-auto max-h-[60vh] my-2 mx-4 flex flex-col text-sm font-roboto text-[#2C4899]">
+                                <span class="py-px">List dgtdsgds</span>
+                                <span class="py-px">List dgtdsgds</span>
+                                <span class="py-px">List dgtdsgds</span>
+                                <span class="py-px">List dgtdsgds</span>
+                                <span class="py-px">List dgtdsgds</span>
+                                <span class="py-px">List dgtdsgds</span>
+                                <span class="py-px">List dgtdsgds</span>
+                            </div>
+                            <div class="mb-1 flex items-center justify-center border-t border-solid border-slate-200 rounded-b">
+                                <button class="mt-1 text-[#253B80] bg-transparent border border-solid border-[#253B80] hover:bg-[#253B80] hover:text-white active:bg-[#253B80] font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="showClasses = false">
+                                Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="showClasses" class="opacity-25 fixed inset-0 z-40 bg-slate-400"></div>
+            </div>
+            <div class="col-span-3 border border-[#436BE5]/[15%] shadow-xl shadow-[#436BE5]/[15%] rounded-md h-[70vh]">
+            </div>
+        </div>                
+        <div v-if="loading1" class="relative inset-x-2/4 inset-y-48 lds-ring"><div></div><div></div><div></div><div></div></div>
+        <div v-else-if="sched != false && loading1 == false" class="max-w-[97vw] mx-auto grid grid-cols-4">
             <!-- Replace with your content -->
             <!-- :time-step="5"
                 timeCellHeight=20 -->
-                <div v-if="loading1" class="loader"></div>
             <div v-if="(viewSchedule == 'class' && viewSchedule != 'faculty' && viewSchedule != 'classroom')" class="col-span-3 rounded-lg shadow-lg">
                 <vue-cal class="rounded-lg"
                     selected-date="2022-08-01"
                     :time-from="7 * 60"
                     :time-to="21 * 60"
-                    twelveHour="true"
-                    hideTitleBar="true"
-                    hideViewSelector="true"
-                    disableViews="[day, month, year, years]"
+                    twelve-hour
+                    hide-title-bar
+                    hide-view-selector
+                    :disable-views="['day', 'month', 'year', 'years']"
                     :events= "events"
                     :on-event-click="onEventClick"
                     >
@@ -203,7 +236,7 @@
                 </vue-cal>
             </div>
 
-            <div v-else-if="showModalFaculty" class="fixed inset-x-10 inset-y-28 z-50 outline-none focus:outline-none">
+            <div v-else-if="showModalFaculty" class="fixed inset-x-10 inset-y-28 z-30 outline-none focus:outline-none">
                     <div class="w-full mx-auto">
                         <!--content-->
                         <div class="border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
@@ -223,12 +256,12 @@
                                     class="col-span-3 cursor-pointer invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-auto text-sky-600 border-1 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                 >
                                     <option disabled value="" class="text-center">Select a Faculty</option>
-                                    <option v-for="list in facultiesList"
+                                    <option v-for="list in facultiesListReport"
                                                 :key="list.id"
                                                 :value="list.id"
                                                 class="text-sky-600 text-justify"
                                                 >
-                                                {{  list.Faculty_Name }}
+                                                {{  "[  "+list.Faculty_ID+" ]&nbsp; "+list.Faculty_Name }}
                                     </option>
                                 </select>
                                 <button
@@ -258,7 +291,7 @@
 
                                 <div class="col-span-2">
                                     <button v-if="printFact == true && facultyscheduleList.length > 0" @click="printFacultySchedule()"
-                                        class="w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-cyan-500 hover:bg-cyan-600 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-cyan-500">
+                                        class="w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-[#3453B3] hover:bg-[#2C4899] focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#3453B3]">
                                         Print this Schedule
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                                         <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -266,7 +299,7 @@
                                         </svg>
                                     </button>
                                     <button v-else disabled
-                                        class="cursor-not-allowed w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-cyan-500 opacity-60">
+                                        class="cursor-not-allowed w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-[#3453B3] opacity-60">
                                         Print this Schedule
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                                         <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -280,11 +313,12 @@
                                     selected-date="2022-08-01"
                                     :time-from="7 * 60"
                                     :time-to="21 * 60"
-                                    twelveHour="true"
-                                    hideTitleBar="true"
-                                    hideViewSelector="true"
-                                    disableViews="[day, month, year, years]"
+                                    twelve-hour
+                                    hide-title-bar
+                                    hide-view-selector
+                                    :disable-views="['day', 'month', 'year', 'years']"
                                     :events= "eventss"
+                                    :on-event-click="onEventClickFaculty"
                                     >
                                     <template v-slot:event="{ event }">
                                         <div class="font-sans 2xl:text-sm xl:text-sm lg:text-xs md:text-xs sm:text-xs sm:font-normal md:font-medium lg:font-semibold xl:font-bold 2xl:font-bold vuecal__event-title" v-html="event.title"/>
@@ -301,9 +335,33 @@
                         </div>
                     </div>
             </div>
-            <div v-if="showModalFaculty" class="opacity-25 fixed inset-0 z-40 bg-slate-700"></div>
+            <div v-if="showModalFaculty" class="opacity-25 fixed inset-0 z-20 bg-slate-700"></div>
 
-            <div v-else-if="showModalClassroom" class="fixed inset-x-10 inset-y-28 z-50 outline-none focus:outline-none">
+        <div v-if="showModalFacultyEvent" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+            <div class="relative w-1/5 mx-auto">
+                <!--content-->
+                <div class="border-0 rounded-lg shadow-lg relative bg-white w-full outline-none focus:outline-none">
+                    <button class="absolute right-0 top-0 pr-0.5 -mt-2 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="showModalFacultyEvent = false">
+                    <span class="bg-transparent text-gray-400 hover:text-gray-600 text-2xl outline-none focus:outline-none">
+                        ×
+                    </span>
+                    </button>
+                    <div class="py-1.5 pr-1.5 flex flex-col items-center text-center justify-center w-auto text-sm text-sky-900 font-semibold">
+                        <span class="font-bold">{{ facultyevent.subject }}</span>
+                        <span class="font-bold">[ {{ facultyevent.subjectcode }} ]</span>
+                        <span>{{ facultyevent.course }} &nbsp;||&nbsp; {{ facultyevent.classroom }}</span>
+                        <span></span>
+                        <span class="text-xs font-medium">{{ facultyevent.units }}</span>
+                        <span class="text-xs font-medium">{{ facultyevent.dayy }} &nbsp;[ {{ facultyevent.timee }} ]</span>
+                        <span class="text-xs font-medium">[ {{ facultyevent.session }} ]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-if="showModalFacultyEvent" class="opacity-25 fixed inset-0 z-40 bg-slate-800"></div>
+
+            
+            <div v-else-if="showModalClassroom" class="fixed inset-x-10 inset-y-28 z-30 outline-none focus:outline-none">
                     <div class="w-full mx-auto">
                         <!--content-->
                         <div class="border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
@@ -322,12 +380,12 @@
                                     class="ml-8 col-span-3 cursor-pointer invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-auto text-sky-600 border-1 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                 >
                                     <option disabled value="" class="text-center">Select a Classroom</option>
-                                    <option v-for="list in classroomsList"
+                                    <option v-for="list in classroomsListReport"
                                                 :key="list.id"
                                                 :value="list.id"
                                                 class="text-sky-600 text-justify"
                                                 >
-                                                {{  list.Building_No +" - "+ list.Classroom_No+" ( "+list.Classroom_Type+" )" }}
+                                                {{  list.Building_No +" - "+ list.Classroom_No+"&nbsp; [ "+list.Classroom_Type+" ]" }}
                                     </option>
                                 </select>
                                 <button
@@ -357,7 +415,7 @@
 
                                 <div class="col-span-2">
                                     <button v-if="printRoom == true && classroomscheduleList.length > 0" @click="printClassroomSchedule()"
-                                        class="w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-cyan-500 hover:bg-cyan-600 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-cyan-500">
+                                        class="w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-[#3453B3] hover:bg-[#2C4899] focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#3453B3]">
                                         Print this Schedule
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                                         <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -365,7 +423,7 @@
                                         </svg>
                                     </button>
                                     <button v-else disabled
-                                        class="cursor-not-allowed w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-cyan-500 opacity-60">
+                                        class="cursor-not-allowed w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-[#3453B3] opacity-60">
                                         Print this Schedule
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                                         <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -379,11 +437,12 @@
                                     selected-date="2022-08-01"
                                     :time-from="7 * 60"
                                     :time-to="21 * 60"
-                                    twelveHour="true"
-                                    hideTitleBar="true"
-                                    hideViewSelector="true"
-                                    disableViews="[day, month, year, years]"
+                                    twelve-hour
+                                    hide-title-bar
+                                    hide-view-selector
+                                    :disable-views="['day', 'month', 'year', 'years']"
                                     :events= "eventsss"
+                                    :on-event-click="onEventClickClassroom"
                                     >
                                     <template v-slot:event="{ event }">
                                         <div class="font-sans 2xl:text-sm xl:text-sm lg:text-xs md:text-xs sm:text-xs sm:font-normal md:font-medium lg:font-semibold xl:font-bold 2xl:font-bold vuecal__event-title" v-html="event.title"/>
@@ -400,110 +459,157 @@
                         </div>
                     </div>
             </div>
-            <div v-if="showModalClassroom" class="opacity-25 fixed inset-0 z-40 bg-slate-700"></div>
+            <div v-if="showModalClassroom" class="opacity-25 fixed inset-0 z-20 bg-slate-700"></div>
 
-            <div v-else-if="showModalClassScheduleREG" class="fixed inset-x-10 inset-y-28 z-50 outline-none focus:outline-none">
-                    <div class="w-full mx-auto">
-                        <!--content-->
-                        <div class="border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
-                            <div class="flex items-center justify-end rounded-t -mb-5">
-                                <button class="pr-1.5 -mt-2 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="toggleModalClassScheduleREG(), viewSchedule = 'class'">
-                                <span class="bg-transparent text-gray-300 hover:text-gray-400 text-3xl outline-none focus:outline-none">
-                                    ×
-                                </span>
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-12 gap-x-2 mb-2">
-                                <div class="col-span-1"></div>
-                                <select
-                                    v-model="vr$.registrar.$model"
-                                    required
-                                    @change="vrs=true, printFact = false, infoR = false, resetVR()"
-                                    class="col-span-3 cursor-pointer invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-auto text-sky-600 border-1 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
-                                >
-                                    <option disabled value="" class="text-center">Select a Class</option>
-                                    <option v-for="list in schedulesList"
-                                                :key="list.id"
-                                                :value="list.id"
-                                                class="text-sky-600 text-center"
-                                                >
-                                                {{ list.Course_Code +"\t"+ list.yearLevel + "-"+list.block }}
-                                    </option>
-                                </select>
-                                <button
-                                    v-if="vr$.$invalid"
-                                    disabled
-                                    class="cursor-not-allowed col-span-2 w-full text-sm border border-transparent shadow-sm uppercase font-semibold font-mono rounded-lg text-white bg-[#0ea5e9] opacity-60 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
-                                    View Schedule of this Class
-                                </button>
-                                <button
-                                    v-else-if="vrs == false"
-                                    disabled
-                                    class="cursor-not-allowed col-span-2 w-full text-sm border border-transparent shadow-sm uppercase font-semibold font-mono rounded-lg text-white bg-[#0ea5e9] opacity-60 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
-                                    View Schedule of this Class
-                                </button>
-                                <button
-                                    v-else
-                                    @click="fetchClassSchedulesREG(), vrs = false, printSched = true, infoR= true, viewsched4 = true"
-                                    class="col-span-2 w-full text-sm border border-transparent shadow-sm uppercase font-semibold font-mono rounded-lg text-white bg-[#0ea5e9] opacity-80 hover:bg-sky-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
-                                    View Schedule of this Class
-                                </button>
-                                
-                                <div v-if="infoR == true" class="col-span-3 flex flex-col items-center justify-center text-sky-800 text-xs uppercase font-bold">
-                                    <span>No. of Subjects = {{ classInfo.count }}</span>
-                                    <span>Units = {{ classInfo.lecU+classInfo.labU }} :: {{ classInfo.lecU+classInfo.labU*3 }} hrs &nbsp; Lec =  {{ classInfo.lecU  }} :: {{ classInfo.lecU }} hrs &nbsp; Lab = {{ classInfo.labU }} :: {{ classInfo.labU*3 }} hrs</span>
-                                </div>
-                                <div v-else class="col-span-3"></div>
+        <div v-if="showModalClassroomEvent" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+            <div class="relative w-1/5 mx-auto">
+                <!--content-->
+                <div class="border-0 rounded-lg shadow-lg relative bg-white w-full outline-none focus:outline-none">
+                    <button class="absolute right-0 top-0 pr-0.5 -mt-2 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="showModalClassroomEvent = false">
+                    <span class="bg-transparent text-gray-400 hover:text-gray-600 text-2xl outline-none focus:outline-none">
+                        ×
+                    </span>
+                    </button>
+                    <div class="py-1.5 pr-1.5 flex flex-col items-center text-center justify-center w-auto text-sm text-sky-900 font-semibold">
+                        <span class="font-bold">{{ classroomevent.subject }}</span>
+                        <span class="font-bold">[ {{ classroomevent.subjectcode }} ]</span>
+                        <span>{{ classroomevent.faculty }}</span>
+                        <span>{{ classroomevent.course }}</span>
+                        <span class="text-xs font-medium">{{ classroomevent.units }}</span>
+                        <span class="text-xs font-medium">{{ classroomevent.dayy }} &nbsp;[ {{ classroomevent.timee }} ]</span>
+                        <span class="text-xs font-medium">[ {{ classroomevent.session }} ]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-if="showModalClassroomEvent" class="opacity-25 fixed inset-0 z-40 bg-slate-800"></div>
 
-                                <div class="col-span-2">
-                                    <button v-if="printSched == true && classscheduleListREG.length > 0" @click="printAll = true, printClassSchedule()"
-                                        class="w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-cyan-500 hover:bg-cyan-600 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-cyan-500">
-                                        Print this Schedule
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
-                                        <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-                                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                                        </svg>
-                                    </button>
-                                    <button v-else disabled
-                                        class="cursor-not-allowed w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-cyan-500 opacity-60">
-                                        Print this Schedule
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
-                                        <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-                                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                                        </svg>
-                                    </button>
-                                </div>
+            <div v-else-if="showModalClassScheduleREG" class="fixed inset-x-10 inset-y-28 z-30 outline-none focus:outline-none">
+                <div class="w-full mx-auto">
+                    <!--content-->
+                    <div class="border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
+                        <div class="flex items-center justify-end rounded-t -mb-5">
+                            <button class="pr-1.5 -mt-2 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="toggleModalClassScheduleREG(), viewSchedule = 'class'">
+                            <span class="bg-transparent text-gray-300 hover:text-gray-400 text-3xl outline-none focus:outline-none">
+                                ×
+                            </span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-2 mb-2">
+                            <div class="col-span-1"></div>
+                            <select
+                                v-model="vr$.registrar.$model"
+                                required
+                                @change="vrs=true, printFact = false, infoR = false, resetVR()"
+                                class="col-span-3 cursor-pointer invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-auto text-sky-600 border-1 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+                            >
+                                <option disabled value="" class="text-center">Select a Class</option>
+                                <option v-for="list in schedulesList"
+                                            :key="list.id"
+                                            :value="list.id"
+                                            class="text-sky-600 text-center"
+                                            >
+                                            {{ list.Course_Code +"\t"+ list.yearLevel + "-"+list.block }}
+                                </option>
+                            </select>
+                            <button
+                                v-if="vr$.$invalid"
+                                disabled
+                                class="cursor-not-allowed col-span-2 w-full text-sm border border-transparent shadow-sm uppercase font-semibold font-mono rounded-lg text-white bg-[#0ea5e9] opacity-60 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
+                                View Schedule of this Class
+                            </button>
+                            <button
+                                v-else-if="vrs == false"
+                                disabled
+                                class="cursor-not-allowed col-span-2 w-full text-sm border border-transparent shadow-sm uppercase font-semibold font-mono rounded-lg text-white bg-[#0ea5e9] opacity-60 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
+                                View Schedule of this Class
+                            </button>
+                            <button
+                                v-else
+                                @click="fetchClassSchedulesREG(), vrs = false, printSched = true, infoR= true, viewsched4 = true"
+                                class="col-span-2 w-full text-sm border border-transparent shadow-sm uppercase font-semibold font-mono rounded-lg text-white bg-[#0ea5e9] opacity-80 hover:bg-sky-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
+                                View Schedule of this Class
+                            </button>
+                            
+                            <div v-if="infoR == true" class="col-span-3 flex flex-col items-center justify-center text-sky-800 text-xs uppercase font-bold">
+                                <span>No. of Subjects = {{ classInfo.count }}</span>
+                                <span>Units = {{ classInfo.lecU+classInfo.labU }} :: {{ classInfo.lecU+classInfo.labU*3 }} hrs &nbsp; Lec =  {{ classInfo.lecU  }} :: {{ classInfo.lecU }} hrs &nbsp; Lab = {{ classInfo.labU }} :: {{ classInfo.labU*3 }} hrs</span>
                             </div>
-                            <div class="rounded-lg shadow-lg">
-                                <vue-cal class="rounded-lg"
-                                    selected-date="2022-08-01"
-                                    :time-from="7 * 60"
-                                    :time-to="21 * 60"
-                                    twelveHour="true"
-                                    hideTitleBar="true"
-                                    hideViewSelector="true"
-                                    disableViews="[day, month, year, years]"
-                                    :events= "eventsREG"
-                                    >
-                                    <template v-slot:event="{ event }">
-                                        <div class="font-sans 2xl:text-sm xl:text-sm lg:text-xs md:text-xs sm:text-xs sm:font-normal md:font-medium lg:font-semibold xl:font-bold 2xl:font-bold vuecal__event-title" v-html="event.title"/>
-                                        <!-- Or if your events are editable: -->
-                                        <div class="font-sans text-xs sm:font-light md:font-light lg:font-normal xl:font-medium 2xl:font-medium vuecal__event-time">
-                                            <marquee scrollamount="1" direction="up" onmouseenter="this.stop()" onmouseleave="this.start()" class="flex justify-center" style="height:50%;"><span>{{ event.start.formatTime("hh:mm {am}") + " - " + event.end.formatTime("hh:mm {am}") }}</span>
-                                        <!-- Using Vue Cal injected Date prototypes -->
-                                        <br><span class="text-xs font-bold font-sans text-center" v-html="event.content"></span></marquee>
-                                        </div>
-                                        
-                                    </template>
-                                </vue-cal>
+                            <div v-else class="col-span-3"></div>
+
+                            <div class="col-span-2">
+                                <button v-if="printSched == true && classscheduleListREG.length > 0" @click="printAll = true, printClassSchedule()"
+                                    class="w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-[#3453B3] hover:bg-[#2C4899] focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#3453B3]">
+                                    Print this Schedule
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
+                                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                    </svg>
+                                </button>
+                                <button v-else disabled
+                                    class="cursor-not-allowed w-full h-full flex items-center justify-center text-sm border border-transparent shadow-sm uppercase font-extrabold font-mono rounded-lg text-white bg-[#3453B3] opacity-60">
+                                    Print this Schedule
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
+                                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+                                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
+                        <div class="rounded-lg shadow-lg">
+                            <vue-cal class="rounded-lg"
+                                selected-date="2022-08-01"
+                                :time-from="7 * 60"
+                                :time-to="21 * 60"
+                                twelve-hour
+                                hide-title-bar
+                                hide-view-selector
+                                :disable-views="['day', 'month', 'year', 'years']"
+                                :events= "eventsREG"
+                                :on-event-click= "onEventClickREG"
+                                >
+                                <template v-slot:event="{ event }">
+                                    <div class="font-sans 2xl:text-sm xl:text-sm lg:text-xs md:text-xs sm:text-xs sm:font-normal md:font-medium lg:font-semibold xl:font-bold 2xl:font-bold vuecal__event-title" v-html="event.title"/>
+                                    <!-- Or if your events are editable: -->
+                                    <div class="font-sans text-xs sm:font-light md:font-light lg:font-normal xl:font-medium 2xl:font-medium vuecal__event-time">
+                                        <span>{{ event.start.formatTime("hh:mm {am}") + " - " + event.end.formatTime("hh:mm {am}") }}</span>
+                                    <!-- Using Vue Cal injected Date prototypes -->
+                                    <br><span class="text-xs font-bold font-sans text-center" v-html="event.content"></span>
+                                    </div>
+                                    
+                                </template>
+                            </vue-cal>
+                        </div>
                     </div>
+                </div>
             </div>
-            <div v-if="showModalClassScheduleREG" class="opacity-25 fixed inset-0 z-40 bg-slate-700"></div>
+            <div v-if="showModalClassScheduleREG" class="opacity-25 fixed inset-0 z-20 bg-slate-700"></div>
 
-            <div class="ml-2 mt-1.5 h-min grid grid-cols-4">
-                <div class="col-span-4 flex justify-end w-10/12 gap-x-2.5">
+        <div v-if="showModalClassREGEvent" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+            <div class="relative w-1/5 mx-auto">
+                <!--content-->
+                <div class="border-0 rounded-lg shadow-lg relative bg-white w-full outline-none focus:outline-none">
+                    <button class="absolute right-0 top-0 pr-0.5 -mt-2 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="showModalClassREGEvent = false">
+                    <span class="bg-transparent text-gray-400 hover:text-gray-600 text-2xl outline-none focus:outline-none">
+                        ×
+                    </span>
+                    </button>
+                    <div class="py-1.5 pr-1.5 flex flex-col items-center text-center justify-center w-auto text-sm text-sky-900 font-semibold">
+                        <span class="font-bold">{{ classregevent.subject }}</span>
+                        <span class="font-bold">[ {{ classregevent.subjectcode }} ]</span>
+                        <span>{{ classregevent.faculty }}</span>
+                        <span>{{ classregevent.classroom }}</span>
+                        <span class="text-xs font-medium">{{ classregevent.units }}</span>
+                        <span class="text-xs font-medium">{{ classregevent.dayy }} &nbsp;[ {{ classregevent.timee }} ]</span>
+                        <span class="text-xs font-medium">[ {{ classregevent.session }} ]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-if="showModalClassREGEvent" class="opacity-25 fixed inset-0 z-40 bg-slate-800"></div>
+
+            <div class="ml-2 mt-1.5 h-min overflow-x-auto h-auto max-h-[76vh] grid grid-cols-4">
+                <div class="mt-1 col-span-4 flex justify-end w-10/12 gap-x-2.5">
                     <button v-if="(curriculumListNotSave.length > 0)" @click="toggleModal()"
                         class="h-auto py-1.5 w-3/5 outline outline-offset-2 outline-1 outline-sky-400 hover:outline-sky-600 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
                         Generate Schedules
@@ -521,12 +627,12 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="31" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"> <path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/></svg>
                     </button>
                 </div>
-                <div v-if="showModalAdd" class="mt-2 2xl:ml-8 static col-span-4 flex justify-end items-center z-50 outline-none focus:outline-none">
-                    <div class="w-screen mx-auto max-w-screen">
+                <div v-if="showModalAdd" class="mt-2 fixed right-14 top-1/4 col-span-4 flex justify-end items-center z-50 outline-none focus:outline-none">
+                    <div class="w-auto mx-auto max-w-full">
                         <!--content-->
                         <div class="border-0 rounded-lg shadow-lg bg-white w-max outline-none focus:outline-none">
                             <div class="flex items-center justify-end rounded-t -mb-6">
-                                <button class="pr-1.5 -mt-1.5 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="toggleModalAdd()">
+                                <button class="pr-1.5 -mt-1.5 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="toggleModalAdd(), reset()">
                                 <span class="bg-transparent text-gray-300 hover:text-gray-400 text-3xl outline-none focus:outline-none">
                                     ×
                                 </span>
@@ -589,7 +695,7 @@
                                                 v-model="x$.Subject.$model"
                                                 @keyup="x$.Subject.$touch()"
                                                 @blur="x$.Subject.$touch()"
-                                                @change="fetchFaculties(onChangeSubject($event)), fetchClassrooms(onChangeSubject($event))"
+                                                @change="resetSession(), fetchSubjectUnits(onChangeSubject($event)), fetchFaculties(onChangeSubject($event))"
                                                 required
                                                 class="mt-0.5 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                         >
@@ -601,6 +707,20 @@
                                                     >
                                                     {{  list.Subject_Code+" - "+list.Subject_Name }}
                                         </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-span-4">
+                                        <select
+                                                v-model="x$.Session.$model"
+                                                @keyup="x$.Session.$touch()"
+                                                @blur="x$.Session.$touch()"
+                                                @change="fetchClassrooms(onChangeSession($event))"
+                                                required
+                                                class="mt-0.5 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+                                        >
+                                        <option disabled value="" class="text-center">Session Type</option>
+                                        <option v-if="subjectUnits != ''" value="Lecture" class="text-sky-600 text-justify">{{ "Lecture [ "+subjectUnits.lec+" units = "+subjectUnits.lec+" hours ]" }}</option>
+                                        <option v-if="subjectUnits != '' && subjectUnits.lab > 0" value="Laboratory" class="text-sky-600 text-justify">{{ "Laboratory [ "+subjectUnits.lab+" units = "+subjectUnits.lab*3+" hours ]" }}</option>
                                         </select>
                                     </div>
                                     <div class="col-span-4">
@@ -671,9 +791,9 @@
                 </div>
                 <div v-if="showModalAdd" class="opacity-25 fixed inset-0 z-40 bg-slate-500"></div>
                
-                <div v-if="(classscheduleID != false)" class="mt-2 2xl:ml-5 xl:ml-4 lg:ml-3 md:ml-2 static col-span-4 flex justify-end items-center z-50 outline-none focus:outline-none">
-                    <div class="w-screen mx-auto max-w-screen">
-                        <div class="w-full border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
+                <div v-if="(classscheduleID != false)" class="mt-2 fixed right-14 top-1/4 col-span-4 flex justify-end items-center z-50 outline-none focus:outline-none">
+                    <div class="w-auto mx-auto max-w-max">
+                        <div class="w-max border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
                             <div class="flex items-center justify-between rounded-t -mb-6">
                                 <button v-if="!showModalEditMode" class="ml-2.5 mt-2" @click="toggleModalEditMode()">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="hover:stroke-sky-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3a6fb0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
@@ -683,7 +803,7 @@
                                         <path d="M0 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
                                     </svg>                                
                                 </button>
-                                <button class="pr-1.5 -mt-1.5 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="(classscheduleID = false, showModalEditMode = false)">
+                                <button class="pr-1.5 -mt-1.5 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="(classscheduleID = false, showModalEditMode = false, resetM())">
                                     <span class="bg-transparent text-gray-300 hover:text-gray-400 text-3xl outline-none focus:outline-none">
                                         ×
                                     </span>
@@ -740,8 +860,9 @@
                                         <select
                                                 v-model="model3Edit.subject_id"
                                                 @change="fetchFaculties(onChangeSubject($event)), fetchClassrooms(onChangeSubject($event))"
-                                                required
-                                                class="mt-0.5 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+                                                disabled
+                                                v-bind:class="`${model3Edit.session == 'Lecture' ? 'bg-[#45c2fc]/[0.85]' : 'bg-[#97deff]/[0.50]'}`"
+                                                class="mt-0.5 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-[#16244D] font-bold border-2 border-sky-600 rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                         >
                                         <option disabled value="" class="text-center">Select a Course</option>
                                         <option v-for="list in subjectListUpdate"
@@ -800,7 +921,7 @@
                                     </div>
                                 </div>
                             </form>
-                            <div v-else class="h-full w-full grid grid-cols-4 gap-2 shadow-md overflow-hidden sm:rounded-lg bg-white sm:px-4 sm:py-3">
+                            <div v-else class="h-full w-auto grid grid-cols-4 gap-2 shadow-md overflow-hidden sm:rounded-lg bg-white sm:px-4 sm:py-3">
                                 <!-- <form class="form" @submit.prevent="AddSchedule()"> -->
                                 <div class="col-span-2 flex flex-col w-full h-full">
                                     <label
@@ -826,7 +947,7 @@
                                     <div class="flex items-center justify-center w-full h-9 cursor-text border-2 border-gray-500 rounded-lg">
                                         <span
                                             class="text-sky-800 font-medium sm:text-sm"
-                                    >{{ model3.day }}</span>
+                                    >{{ model3.day }}&nbsp;&nbsp; [ {{ model3.session }} Session ]</span>
                                     </div>
                                 </div>
                                 <div class="col-span-4">
@@ -896,23 +1017,23 @@
                                     </select>
                                 </div>
                                 <div v-else
-                                    class="w-full border-t-2 pt-2 mr-1.5 col-span-4 grid grid-cols-6 w-auto">
+                                    class="w-auto border-t-2 pt-2 mr-1.5 col-span-4 grid grid-cols-6">
                                     <button
                                         v-if="mcs$.$invalid"
                                         disabled
-                                        class="cursor-not-allowed col-span-2 w-full text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-80 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
+                                        class="cursor-not-allowed col-span-2 w-auto text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-80 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#6ccffd]">
                                         Merge Class
                                     </button>
                                     <button
                                         v-else-if="mcs == false"
                                         disabled
-                                        class="cursor-not-allowed col-span-2 w-full text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-50 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#f8bb82]">
+                                        class="cursor-not-allowed col-span-2 w-auto text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-50 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#f8bb82]">
                                         Merge This Class To:
                                     </button>
                                     <button
                                         v-else
                                         @click="mergeClassSchedule(), mcs = false"
-                                        class="cursor-pointer col-span-2 w-full text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-80 hover:bg-orange-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#f8bb82]">
+                                        class="cursor-pointer col-span-2 w-auto text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-80 hover:bg-orange-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#f8bb82]">
                                         Merge Class to
                                     </button>
                                     <select
@@ -973,9 +1094,9 @@
 
                 <div class="col-span-4 border border-1 mt-3 shadow-md overflow-hidden sm:rounded-lg bg-white sm:px-3">
                     <div class="flex flex-col items-start h-auto gap-y-1">
-                        <span class="border-b-2 -mb-px mt-0.5 w-full text-center text-xs uppercase text-sky-800 font-bold">Schedules' Status</span>
+                        <span class="border-b-2 -mb-px mt-0.5 w-full text-center text-xs uppercase text-[#253B80] font-bold">Schedules' Status</span>
                         <div v-for="(stat, index) in curriculumStatus" :key="index"
-                            class="flex items-center gap-x-1 w-max h-max text-xs text-sky-900 font-medium">
+                            class="flex items-center gap-x-1 w-max h-max text-xs text-[#1E3066] font-medium">
                             <svg v-if="stat.status == 'Complete'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#55bc7c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                             <svg v-else-if="stat.status == 'Incomplete'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8f55bc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                             <svg v-else-if="stat.status == 'Not Saved'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bf071e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
@@ -992,8 +1113,10 @@
                                 No records of Schedules for this class.
                             </span>
                         </div>
+                        <div v-if="(statOther && curriculumStatusOther.length > 0)" class="border-t border-sky-200 w-full">
+                        </div>
                         <div v-if="statOther" v-for="(stat, index) in curriculumStatusOther" :key="index"
-                            class="flex items-center gap-x-1 w-max h-max text-xs text-sky-900 font-medium">
+                            class="flex items-center gap-x-1 w-max h-max text-xs text-[#1E3066] font-medium">
                             <svg v-if="stat.status == 'Complete'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#55bc7c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                             <svg v-else-if="stat.status == 'Incomplete'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8f55bc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                             <svg v-else-if="stat.status == 'Not Saved'" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bf071e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
@@ -1012,47 +1135,49 @@
                         </div>
                         <div class="textBox2 flex items-center gap-x-1 text-xs text-gray-500 font-bold">
                             <span v-if="!statOther">
-                                TOTALS: Courses: {{CSI1.count}}&nbsp; Credit Units = {{CSI1.lecU+CSI1.labU}} :: {{ CSI1.lecU+CSI1.labU*3 }} hrs &nbsp; Lecture Units = {{ CSI1.lecU }} :: {{ CSI1.lecU }} hrs &nbsp; Lab Units = {{ CSI1.labU }} :: {{ CSI1.labU*3 }} hrs
+                                TOTALS&nbsp; :: &nbsp;Courses = {{CSI1.count}} / {{CSI1.total}}&nbsp; :: &nbsp;Credit Units [{{CSI1.lecU+CSI1.labU}}] = {{ CSI1.hours }} / {{ CSI1.lecU+CSI1.labU*3 }} hrs &nbsp; :: &nbsp;Lecture Units [{{ CSI1.lecU }}] =  {{ CSI1.hourslec }} / {{ CSI1.lecU }} hrs &nbsp; :: &nbsp;Lab Units [{{ CSI1.labU }}] = {{ CSI1.hourslab }} / {{ CSI1.labU*3 }} hrs
                             </span>
                             <span v-else>
-                                TOTALS: Courses: {{CSI2.count}}&nbsp; Credit Units = {{CSI2.lecU+CSI2.labU}} :: {{ CSI2.lecU+CSI2.labU*3 }} hrs &nbsp; Lecture Units = {{ CSI2.lecU }} :: {{ CSI2.lecU }} hrs &nbsp; Lab Units = {{ CSI2.labU }} :: {{ CSI2.labU*3 }} hrs
+                                TOTALS&nbsp; :: &nbsp;Courses = {{CSI2.count}} / {{CSI2.total}}&nbsp; :: &nbsp;Credit Units [{{CSI2.lecU+CSI2.labU}}] = {{ CSI2.hours }} / {{ CSI2.lecU+CSI2.labU*3 }} hrs &nbsp; :: &nbsp;Lecture Units [{{ CSI2.lecU }}] = {{ CSI2.hourslec }} / {{ CSI2.lecU }} hrs &nbsp; :: &nbsp;Lab Units [{{ CSI2.labU }}] = {{ CSI2.hourslab }} / {{ CSI2.labU*3 }} hrs
                             </span>
                         </div>
                     </div>
-                    <div class="mt-1.5 flex flex-row items-center gap-x-1 border-t-2 w-full h-max text-xs text-sky-800 font-medium">
+                    <div class="mt-1.5 flex flex-row items-center gap-x-1 border-t-2 w-full h-max text-xs text-[#253B80] font-medium">
                         <input type="checkbox" v-model="statOther" class="ml-0.5 mt-0.5 w-3 h-3 cursor-pointer border-1 border-sky-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500 rounded-sm"/>
                         <span class="mt-px">Show Schedules' Status from the other User/s.</span>
                     </div>
                     <div class="flex flex-col items-center h-auto gap-y-1">
-                        <div class="mt-1 flex items-center gap-x-1 w-max h-max text-xs text-sky-800 font-medium">
+                        <div class="mt-1 flex items-center gap-x-1 w-max h-max text-xs text-[#253B80] font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#55bc7c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                             <span>Saved Completely</span>
                         </div>
-                        <div class="flex items-center gap-x-1 w-max h-max text-xs text-sky-800 font-medium">
+                        <div class="flex items-center gap-x-1 w-max h-max text-xs text-[#253B80] font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8f55bc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                             <span>Insufficient no. of Hours per Total Units</span>
                         </div>
-                        <div class="flex items-center gap-x-1 w-max h-max text-xs text-sky-800 font-medium">
+                        <div class="flex items-center gap-x-1 w-max h-max text-xs text-[#253B80] font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bf071e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                             <span>Not Saved</span>
                         </div>
-                        <div class="flex items-center gap-x-1 w-max h-max text-xs text-sky-800 font-medium">
+                        <div class="flex items-center gap-x-1 w-max h-max text-xs text-[#253B80] font-medium">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#da7807" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                             <span>Exceeds no. of Hours per Total Units</span>
                         </div>
                     </div>
-                    <div class="flex items-center text-xs text-sky-800 font-medium text-center">
-                        <div class="mt-1 mr-1 w-2/12 h-6 border border-1 bg-[#45c2fc] border-[#095181] opacity-80 rounded-md mb-0.5"></div>
-                        <span>Saved Schedule</span>
+                    <div class="-ml-1 mt-1 mb-0.5 flex items-center text-xs text-[#253B80] font-medium text-center">
+                        <div class="mr-0.5 w-1/5 h-6 border border-1 bg-[#45c2fc] border-[#253B80] rounded-md"><span class="align-middle text-xs text-[#253B80]">Lecture</span></div>
+                        <div class="mr-0.5 w-1/5 h-6 border border-1 bg-[#97DDFF] border-[#253B80] rounded-md"><span class="align-middle text-xs text-[#253B80]">Laboratory</span></div>
+                        <span>Saved Schedules</span>
                     </div>
-                    <div class="mb-1 flex items-center text-xs text-sky-800 font-medium text-center">
-                        <div class="mr-1 w-2/12 h-6 border border-1 bg-[#6dd8db] border-[#025d6d] opacity-80 rounded-md pt-px"></div>
+                    <div class="-ml-1 mb-1 flex items-center text-xs text-[#253B80] font-medium">
+                        <div class="mr-0.5 w-1/5 h-6 border border-1 bg-[#6dd8db] border-[#253B80] rounded-md text-center"><span class="align-middle text-xs text-[#253B80]">Lecture</span></div>
+                        <div class="mr-0.5 w-1/5 h-6 border border-1 bg-[#a5f0f3] border-[#253B80] rounded-md text-center"><span class="align-middle text-xs text-[#253B80]">Laboratory</span></div>
                         <span>Saved Schedules by the Other User/s</span>
                     </div>
                 </div>
 
                 <div class="col-span-4 flex justify-center mt-4">
-                    <button v-if="(subjectList.length > 0)" @click="toggleModalAdd()"
+                    <button v-if="(subjectList.length > 0)" @click="reset(), toggleModalAdd()"
                         class="h-auto py-1.5 w-3/5 outline outline-offset-2 outline-1 outline-sky-400 hover:outline-sky-600 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
                         Add Schedule
                     </button>
@@ -1063,21 +1188,21 @@
                 </div>
 
                 <div class="col-span-4 flex justify-center mt-4">
-                    <button @click="toggleModalFaculty(), viewSchedule = 'faculty'"
+                    <button @click="toggleModalFaculty(), fetchFacultiesReports(), viewSchedule = 'faculty'"
                         class="h-auto py-1.5 w-4/6 outline outline-offset-2 outline-1 outline-cyan-400 hover:outline-cyan-600 text-sm font-bold uppercase rounded-lg text-white bg-cyan-400 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400">
                         View Faculty Schedule
                     </button>
                 </div>
                 <div class="col-span-4 flex justify-center mt-4">
-                    <button @click="toggleModalClassroom(), viewSchedule = 'classroom'"
+                    <button @click="toggleModalClassroom(), fetchClassroomsCollegeReports(), viewSchedule = 'classroom'"
                         class="h-auto py-1.5 w-4/6 outline outline-offset-2 outline-1 outline-cyan-400 hover:outline-cyan-600 text-sm font-bold uppercase rounded-lg text-white bg-cyan-400 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400">
                         View Classroom Schedule
                     </button>
                 </div>
 
-                <div class="col-span-4 flex justify-center mt-4">
+                <div class="mb-1 col-span-4 flex justify-center mt-4">
                     <button v-if="classscheduleList.length > 0 && userType == 'dept'" @click="toggleModalPrintClass()"
-                        class="h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-teal-400 hover:outline-teal-600 text-sm hover:text-sky-300 font-bold uppercase rounded-lg text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400">
+                        class="h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] hover:outline-[#253B80] text-sm hover:text-slate-300 font-bold uppercase rounded-lg text-white bg-[#253B80] hover:bg-[#2C4899] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C4899]">
                         Print This Class Schedule
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                             <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -1085,7 +1210,7 @@
                         </svg>
                     </button>
                     <button v-else-if="classscheduleList.length > 0 && userType == 'reg'" @click="fetchSchedulesCollege(); toggleModalClassScheduleREG()"
-                        class="h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-teal-400 hover:outline-teal-600 text-sm hover:text-sky-300 font-bold uppercase rounded-lg text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400">
+                        class="h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] hover:outline-[#253B80] text-sm hover:text-slate-300 font-bold uppercase rounded-lg text-white bg-[#253B80] hover:bg-[#2C4899] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C4899]">
                         View Class Schedules
                         <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                             <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -1093,7 +1218,7 @@
                         </svg> -->
                     </button>
                     <button v-else disabled
-                        class="cursor-not-allowed h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-teal-400 text-sm font-bold uppercase rounded-lg text-white bg-teal-500">
+                        class="cursor-not-allowed h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] text-sm font-bold uppercase rounded-lg text-white bg-[#253B80]">
                         Print This Class Schedule
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                             <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -1106,8 +1231,9 @@
             <!-- /End replace -->
         </div>
 
-        <div v-if="showModal" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
-            <div class="relative w-auto mx-auto max-w-screen-xl">
+        <div v-if="showModal" class="overflow-x-hidden fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+            <div v-if="loading" class="lds-ring"><div></div><div></div><div></div><div></div></div>
+            <div v-else class="relative overflow-x-auto w-auto mx-auto max-w-[90vw]">
                 <!--content-->
                 <div class="border-0 rounded-lg shadow-lg relative bg-white flex flex-col w-full outline-none focus:outline-none">
                     <!--header-->
@@ -1123,7 +1249,7 @@
                     </div>
                     <form class="form" @submit.prevent="generateClassSchedule()">
                         <!--body-->
-                        <div class="px-5 pb-1 grid grid-cols-12 h-64 overflow-y-auto">
+                        <div class="px-5 pb-1 grid grid-cols-12 overflow-y-auto h-auto max-h-[85vh]">
                             <div class="border-b col-span-12 py-1 grid grid-cols-12 gap-x-5">
                                 <div class="col-span-1"></div>
                                 <div class="col-span-5 flex items-center">
@@ -1245,13 +1371,13 @@
                                     </div>
                                     <div class="-mt-1.5">
                                         <label for="one" class="text-sm font-medium text-gray-700">1</label>
-                                        <input v-if="(item.lec >= 1)" v-model="item.split_lec" value=1 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
+                                        <input v-if="(item.lec >= 1)" @change="getErrorS(index, item.lecerror, item.laberror, 'lec')" v-model="item.split_lec" value=1 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
                                         <input v-else type="radio" value=0 disabled class="ml-px mr-1.5 cursor-not-allowed place-self-center border-2 border-gray-500"/>
                                         <label for="two" class="text-sm font-medium text-gray-700">2</label>
-                                        <input v-if="(item.lec >= 2)" v-model="item.split_lec" value=2 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
+                                        <input v-if="(item.lec >= 2)" @change="getErrorS(index, item.lecerror, item.laberror, 'lec')" v-model="item.split_lec" value=2 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
                                         <input v-else type="radio" value=0 disabled class="ml-px mr-1.5 cursor-not-allowed place-self-center border-2 border-gray-500"/>
                                         <label for="three" class="text-sm font-medium text-gray-700">3</label>
-                                        <input v-if="(item.lec >= 3)" v-model="item.split_lec" value=3 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
+                                        <input v-if="(item.lec >= 3)" @change="getErrorS(index, item.lecerror, item.laberror, 'lec')" v-model="item.split_lec" value=3 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
                                         <input v-else type="radio" value=0 disabled class="ml-px mr-1.5 cursor-not-allowed place-self-center border-2 border-gray-500"/>
                                     </div>
                                 </div>
@@ -1265,13 +1391,13 @@
                                     </div>
                                     <div class="-mt-1.5">
                                         <label for="one" class="text-sm font-medium text-gray-700">1</label>
-                                        <input v-if="(item.lab >= 1)" v-model="item.split_lab" value=1 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
+                                        <input v-if="(item.lab >= 1)" @change="getErrorS(index, item.lecerror, item.laberror, 'lab')" v-model="item.split_lab" value=1 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
                                         <input v-else type="radio" value=0 disabled class="ml-px mr-1.5 cursor-not-allowed place-self-center border-2 border-gray-500"/>
                                         <label for="two" class="text-sm font-medium text-gray-700">2</label>
-                                        <input v-if="(item.lab >= 1)" v-model="item.split_lab" value=2 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
+                                        <input v-if="(item.lab >= 1)" @change="getErrorS(index, item.lecerror, item.laberror, 'lab')" v-model="item.split_lab" value=2 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
                                         <input v-else type="radio" value=0 disabled class="ml-px mr-1.5 cursor-not-allowed place-self-center border-2 border-gray-500"/>
                                         <label for="three" class="text-sm font-medium text-gray-700">3</label>
-                                        <input v-if="(item.lab >= 1)" v-model="item.split_lab" value=3 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
+                                        <input v-if="(item.lab >= 1)" @change="getErrorS(index, item.lecerror, item.laberror, 'lab')" v-model="item.split_lab" value=3 type="radio" required class="ml-px mr-1.5 cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500"/>
                                         <input v-else type="radio" value=0 disabled class="ml-px mr-1.5 cursor-not-allowed place-self-center border-2 border-gray-500"/>
                                     </div>
                                 </div>
@@ -1296,6 +1422,7 @@
                                     <select
                                         v-model="item.f_id"
                                         required
+                                        @change="getErrorF(index, item.lecerror, item.laberror)"
                                         class="mt-1 block w-full py-2 px-3 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 border-2 border-sky-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                     >
                                         <option disabled class="text-center" value="">Select a Faculty</option>
@@ -1313,6 +1440,7 @@
                                         <select
                                             v-model="item.c_id_lec"
                                             required
+                                            @change="getError(index, item.lecerror, 'lec'), item.lecerror = ''"
                                             class="mt-1 block w-full py-2 px-3 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 border-2 border-sky-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                         >
                                             <option disabled class="text-center" value="">Select a Classroom</option>
@@ -1330,6 +1458,7 @@
                                             v-if="item.lab > 0"
                                             v-model="item.c_id_lab"
                                             required
+                                            @change="getError(index, item.laberror, 'lab'), item.laberror = ''"
                                             class="mt-1 block w-full py-2 px-3 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 border-2 border-sky-500 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                         >
                                             <option disabled class="text-center" value="">Select a Classroom</option>
@@ -1344,7 +1473,7 @@
                                         <select
                                             v-else
                                             disabled
-                                            class="cursor-not-allowed mt-1 block w-full py-2 px-3 border-2 border-orange-600 bg-white rounded-md shadow-sm sm:text-sm"
+                                            class="cursor-not-allowed mt-1 block w-full py-2 px-3 border-2 border-gray-500 bg-white rounded-md shadow-sm sm:text-sm"
                                         >
                                             <option disabled class="text-center" value="">Select a Classroom</option>
                                         </select>
@@ -1360,7 +1489,7 @@
                         </div>
                         <!--footer-->
                         <div class="flex items-center justify-center border-t border-solid border-slate-200 rounded-b">
-                            <button v-if="(curriculumListNotSave.length > 0)" type="submit" class="text-sky-500 bg-transparent border border-solid border-sky-500 hover:bg-sky-500 hover:text-white active:bg-sky-600 font-bold uppercase text-sm px-4 py-2 rounded outline-none focus:outline-none my-2 ease-linear transition-all duration-150">
+                            <button v-if="(curriculumListNotSave.length > 0 && countError <= 0)" type="submit" class="text-sky-500 bg-transparent border border-solid border-sky-500 hover:bg-sky-500 hover:text-white active:bg-sky-600 font-bold uppercase text-sm px-4 py-2 rounded outline-none focus:outline-none my-2 ease-linear transition-all duration-150">
                             Generate Schedules
                             </button>
                             <button v-else type="submit" disabled class="cursor-not-allowed text-sky-500 bg-transparent border border-solid border-sky-500 font-bold uppercase text-sm px-4 py-2 rounded outline-none focus:outline-none my-2 ease-linear transition-all duration-150">
@@ -1449,11 +1578,96 @@ import APIController from '../controllers/api'
 import VueCal from 'vue-cal'
 import 'vue-cal/dist/vuecal.css'
 import { reactive } from '@vue/reactivity';
+import Chart from 'chart.js/auto';
 
 export default {
     name: 'Class Scheduler',
     components: { VueCal },
     setup () {
+        const myChart = ref(null);
+        const totalClasses = ref(0);
+        const completeCount = ref(0);
+        const incompleteCount = ref(0);
+        const withoutCount = ref(0);
+
+        const data = ref({
+            labels: [
+                'With Complete Saved Schedules',
+                'With Incomplete Saved Schedules',
+                'Without Saved Schedules'
+            ],
+            datasets: [{
+                label: 'No. of Classes',
+                data: [completeCount.value, incompleteCount.value, withoutCount.value],
+                backgroundColor: [
+                '#38bdf8',
+                '#253B80',
+                '#FB923C'
+                ],
+                hoverOffset: 4,
+                cutout: '70%',
+                radius: '90%'
+            }]
+        });
+        const config = ref({
+            type: 'doughnut',
+            data: data.value,
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#253B80',
+                        },
+                        onHover: handleHover,
+                        onLeave: handleLeave,
+                        onClick: newClickHandler
+                    },
+                    title: {
+                        display: true,
+                        color: '#253B80',
+                        text: 'TOTAL NO. OF CLASSES  [ '+totalClasses.value+' ]',
+                        font: {
+                            weight: '800',
+                            size: 13,
+                        },
+                    },
+                    subtitle: {
+                        display: true,
+                        text: 'Based on the Saved Curriculums by this user.',
+                        color: '#253B80',
+                        font: {
+                            style: 'italic',
+                        },
+                        padding: {
+                            top: -5,
+                            bottom: -10
+                        }
+                    }
+                }
+            }
+        });
+        const showClasses = ref(false);
+        const legendLabel = ref("");
+
+        function newClickHandler(e, legendItem, legend) {
+            legendLabel.value = legendItem.text;
+            showClasses.value = true;
+        }
+
+        function handleHover(evt, item, legend) {
+            legend.chart.data.datasets[0].backgroundColor.forEach((color, index, colors) => {
+                colors[index] = index === item.index || color.length === 9 ? color : color + '4D';
+            });
+            legend.chart.update();
+        }
+        function handleLeave(evt, item, legend) {
+            legend.chart.data.datasets[0].backgroundColor.forEach((color, index, colors) => {
+                colors[index] = color.length === 9 ? color.slice(0, -2) : color;
+            });
+            legend.chart.update();
+        }
+
         const userType = ref(null);
         
         const showModal = ref(false);
@@ -1575,7 +1789,7 @@ export default {
                               fontSize: 9,
                               cellPadding: {top: 3, bottom: 3, left: 1.5, right: 1}
                             },
-                head: [['Code', 'Course', 'Credit', 'Lec', 'Lab', 'Days', 'Time', 'Room', 'Faculty']],
+                head: [['Code', 'Course', 'Credit', 'Lec', 'Lab*', 'Days', 'Time', 'Room', 'Faculty']],
                 body:  rowBody
   
             })
@@ -1660,7 +1874,7 @@ export default {
                               fontSize: 9,
                               cellPadding: {top: 3, bottom: 3, left: 1.5, right: 1}
                             },
-                head: [['Class', 'Code', 'Course', 'Credit', 'Lec', 'Lab', 'Days', 'Time', 'Room']],
+                head: [['Class', 'Code', 'Course', 'Credit', 'Lec', 'Lab *', 'Days', 'Time', 'Room']],
                 body:  rowBody
   
             })
@@ -1718,7 +1932,7 @@ export default {
                               fontSize: 9,
                               cellPadding: {top: 3, bottom: 3, left: 1.5, right: 1}
                             },
-                head: [['Class', 'Code', 'Course', 'Credit', 'Lec', 'Lab', 'Days', 'Time', 'Faculty']],
+                head: [['Class', 'Code', 'Course', 'Credit', 'Lec', 'Lab *', 'Days', 'Time', 'Faculty']],
                 body:  rowBody
   
             })
@@ -1804,8 +2018,8 @@ export default {
         //     console.log(schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, subjects, lec, lab, split_lec, split_lab, JSON.stringify(prefDays), time_period, faculties, classrooms);
         // };
 
-        const chooseStartTimeM = ref(null);
-        const chooseStartTimeA = ref(null);
+        const chooseStartTimeM = ref('08:00');
+        const chooseStartTimeA = ref('13:00');
 
         const onefaculty = ref({});
         const oneclassroom_lec = ref({});
@@ -1905,8 +2119,18 @@ export default {
             model.value = {...initialState};
         }
         const toggleAYSem = () => {
-            if(!h$.value.$invalid)
+            collegeList.value = [];
+            courseList.value = [];
+            yearLevelList.value = [];
+            completeCount.value = 0;
+            incompleteCount.value = 0;
+            withoutCount.value = 0;
+            block.value = 0;
+            if(!h$.value.$invalid){
                 fetchColleges();
+                fetchTotalClasses();
+                myChart.value = new Chart(document.getElementById('myChart'), config.value);
+            }
         }
 
         const initialState = {
@@ -1923,6 +2147,10 @@ export default {
         const eventss = ref([]); //faculty schedules
         const eventsss = ref([]); //classroom schedules
         const eventsREG = ref([]);//view schedules for registrar
+
+        const facultyevent = ref({});
+        const classroomevent = ref({});
+        const classregevent = ref({});
 
         const classscheduleList = ref([]);
         const facultyscheduleList = ref([]);
@@ -1945,14 +2173,22 @@ export default {
             labU: 0
         });
         const CSI1 = ref({
+            total: 0,
             count: 0,
             lecU: 0,
-            labU: 0
+            labU: 0,
+            hours: 0,
+            hourslec: 0,
+            hourslab: 0,
         });
         const CSI2 = ref({
+            total: 0,
             count: 0,
             lecU: 0,
-            labU: 0
+            labU: 0,
+            hours: 0,
+            hourslec: 0,
+            hourslab: 0,
         });
 
         const model = ref({...initialState});
@@ -1970,6 +2206,7 @@ export default {
 
         const subjectList = ref([]);
         const subjectListUpdate = ref([]);
+        const subjectUnits = ref([]);
         const facultyList = ref([]);
         const classroomList = ref([]);
         const classScheduleMajor = ref([]);
@@ -1978,8 +2215,8 @@ export default {
         const clickSubj = ref(null);
 
         const college = ref([]);
-        const facultiesList = ref([]);
-        const classroomsList = ref([]);
+        const facultiesListReport = ref([]);
+        const classroomsListReport = ref([]);
         const schedulesList = ref([]);
 
         // const major = ref('');
@@ -1989,6 +2226,7 @@ export default {
             EndTime: '',
             Day: '',
             Subject: '',
+            Session: '',
             Faculty: '',
             Classroom: '',
         }
@@ -1999,6 +2237,7 @@ export default {
                 StartTime: { required },
                 EndTime: { required },
                 Subject: { required },
+                Session: { required },
                 Faculty: { required },
                 Classroom: { required },
             }
@@ -2006,12 +2245,22 @@ export default {
 
         const reset = () => {
             model2.value = {...initialState2};
+            subjectUnits.value = [];
+            facultyList.value = [];
+            classroomList.value = [];
             // major.value = '';
         }
+        const resetSession = () => {
+            model2.value.Session = '';
+            model2.value.Classroom = '';
+            classroomList.value = [];
+        }
         const resetPref = () => {
-            preferredSchedule.value = [],
-            chooseStartTimeA.value = null;
-            chooseStartTimeM.value = null;
+            preferredSchedule.value = [];
+        }
+        const resetStartTime = () => {
+            chooseStartTimeA.value = '13:00';
+            chooseStartTimeM.value = '08:00';
         }
         const resetVF = () => {
             factInfo.value = { count: 0, lecU: 0, labU: 0 };
@@ -2029,8 +2278,8 @@ export default {
             eventsREG.value = [];
         }
         const resetCSI = () => {
-            CSI1.value = { count: 0, lecU: 0, labU: 0};
-            CSI2.value = { count: 0, lecU: 0, labU: 0};
+            CSI1.value = { total: 0, count: 0, lecU: 0, labU: 0, hours: 0, hourslec: 0, hourslab: 0};
+            CSI2.value = { total: 0, count: 0, lecU: 0, labU: 0, hours: 0, hourslec: 0, hourslab: 0};
         }
         const resetM = () => {
             mergeClass.value = {...initialMCS};
@@ -2088,6 +2337,44 @@ export default {
         // const timeR = ref(null);
 
         const yearLevelList = ref([]);
+        const block = ref(0);
+
+        const countError = ref(0);
+        const errorTypeLec = ref([]);
+        const errorTypeLab = ref([]);
+
+        const getError = (index, err, type) => {
+            if(type == "lec" && errorTypeLec.value[index] == "assroom.")
+                if(!(err == null || err == ""))
+                    countError.value -= 1;
+            if(type == "lab" && errorTypeLab.value[index] == "assroom.")
+                if(!(err == null || err == ""))
+                    countError.value -= 1;
+        }
+        const getErrorF = (index, errLec, errLab) => {
+            if(errorTypeLec.value[index] == "Faculty.")
+                if(!(errLec == null || errLec == "")){
+                    countError.value -= 1;
+                    preferredSchedule.value[index].lecerror = '';
+                }
+            if(errorTypeLab.value[index] == "Faculty.")
+                if(!(errLab == null || errLab == "")){
+                    countError.value -= 1;
+                    preferredSchedule.value[index].laberror = '';
+                }
+        }
+        const getErrorS = (index, errLec, errLab, type) => {
+            if(type == "lec" && errorTypeLec.value[index] == "session.")
+                if(!(errLec == null || errLec == "")){
+                    countError.value -= 1;
+                    preferredSchedule.value[index].lecerror = '';
+                }
+            if(type == "lab" && errorTypeLab.value[index] == "session.")
+                if(!(errLab == null || errLab == "")){
+                    countError.value -= 1;
+                    preferredSchedule.value[index].laberror = '';
+                }
+        }
 
         const deleteCS = ref(false);
         const resetB = ref(false);
@@ -2102,17 +2389,63 @@ export default {
         // }
         // const details = ref({...zxc});
 
+        const fetchTotalClasses = async () => {
+            let totalC = await APIController.FetchCurriculaTotals(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID')); 
+            totalClasses.value = totalC[totalC.length-1].total;
+            for (let i = 0; i < totalC.length; i++) {
+                let statusC = await APIController.FetchCurriculaStatus(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, totalC[i].sched_id, totalC[i].course_id, totalC[i].yearLevel, localStorage.getItem('userID'));
+                var countStatS = 0;var countStatN = 0;var countStatI = 0;
+                for (let j = 0; j < statusC.length; j++) {
+                    if(statusC[j].status == "Complete")
+                        countStatS++;
+                    else if(statusC[j].status == "Not Saved")
+                        countStatN++;
+                }
+                if(countStatS == statusC.length)
+                    completeCount.value += 1;
+                else if(countStatN != statusC.length)
+                    incompleteCount.value += 1;
+            }
+            withoutCount.value = totalClasses.value - (completeCount.value + incompleteCount.value);
+            console.log(totalClasses.value);
+        }
+
         const fetchColleges = async () => {
+            courseList.value = [];
+            yearLevelList.value = [];
+            block.value = 0;
             collegeList.value = await APIController.FetchCurriculaListCollege(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID'));
         }
 
         const fetchCourses = async () => {
+            yearLevelList.value = [];
+            block.value = 0;
             courseList.value = await APIController.FetchCurriculaListCourse(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID'), model.value.selectedCollege);
-            // courseList.value = await APIController.FetchCoursesCollege(model.value.selectedCollege);
         }
 
         const fetchYearLevel = async () => {
+            block.value = 0;
             yearLevelList.value = await APIController.FetchCurriculaListYearLevel(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID'), model.value.selectedCourse);
+        }
+
+        const fetchBlock = async (id) => {
+            let tempblock = await APIController.FetchCourseBlock(model.value.selectedCourse, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
+            if (tempblock){
+                switch (id) {
+                    case "First Year":
+                        block.value = tempblock.first;
+                        break;
+                    case "Second Year":
+                        block.value = tempblock.second;
+                        break;
+                    case "Third Year":
+                        block.value = tempblock.third;
+                        break;
+                    case "Fourth Year":
+                        block.value = tempblock.fourth;
+                        break;
+                }
+            }
         }
 
         const fetchCurricula = async () => {
@@ -2127,6 +2460,10 @@ export default {
         }
 
         const toggleModal = async () => {
+            countError.value = 0;
+            errorTypeLec.value = [];
+            errorTypeLab.value = [];
+            loading.value = true;
             curriculumListNotSave.value = await APIController.FetchCurriculaNotSaved(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, model.value.selectedCourse, model.value.selectedYearLevel, localStorage.getItem('userID'));
             showModal.value = !showModal.value;
             preferredSchedule.value = new Array(curriculumListNotSave.value.length);
@@ -2186,6 +2523,7 @@ export default {
 
                 oneclassroom_lab.value = await APIController.FetchClassroomCurriculumLab(curriculumListNotSave.value[i].classrooms_id);
 
+                if(oneclassroom_lab.value.length>0)
                 preferredSchedule.value[i].classroom_id_lab = oneclassroom_lab.value.map(function (element){
                     let properties = {
                         "id": element.id,
@@ -2196,7 +2534,7 @@ export default {
                     return properties;
                 });
             }
-            
+            loading.value = false;
         }
 
         // const FetchClassroomsModal = async (id) => {
@@ -2204,35 +2542,24 @@ export default {
         // }
 
         const AddSchedule = async () => {
+            loading1.value = true;
+            userType.value = localStorage.getItem('userType');
             tempSchedule = await APIController.CreateSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel, model.value.selectedBlock);
             if(tempSchedule){
-                loading1.value = true;
-                try{
                 schedule.value = tempSchedule.id;
-                fetchClassSchedules();
                 fetchCurricula();
                 fetchCurriculaStatus();
+                fetchClassSchedules();
                 sched.value = true;
-                loading1.value = false;
-                }catch (error) {
-                console.log(error);
-                loading1.value = false;
-                }
             }
             else {
-                loading1.value = true;
-                try{
                 schedule.value = await APIController.FetchSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel, model.value.selectedBlock);
                 sched.value = true;
                 fetchCurricula();
                 fetchCurriculaStatus();
                 fetchClassSchedules();
-                loading1.value = false;
-                }catch (error) {
-                console.log(error);
-                loading1.value = false;
-                }
             }
+            loading1.value = false;
         }
 
         const generateClassSchedule = async () => {
@@ -2283,20 +2610,30 @@ export default {
             else if(alertTP)
                 alert("Please select a Time Period on each row.");
             else {
-                                              console.log(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms_lec), JSON.stringify(classrooms_lab), parseInt(localStorage.getItem('userID')));
-                let gensched = await APIController.GenerateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms_lec), JSON.stringify(classrooms_lab), parseInt(localStorage.getItem('userID')));
+                let gensched = await APIController.GenerateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, chooseStartTimeM.value, chooseStartTimeA.value, JSON.stringify(subjects), JSON.stringify(lec), JSON.stringify(lab), JSON.stringify(split_lec), JSON.stringify(split_lab), JSON.stringify(prefDays), JSON.stringify(time_period), JSON.stringify(faculties), JSON.stringify(classrooms_lec), JSON.stringify(classrooms_lab), localStorage.getItem('userID'));
                 if(gensched){
-                    for(let i = 0; i < gensched.value.length; i++){
-                        preferredSchedule.value[i].lecerror = gensched.value[i].lecerror;
-                        preferredSchedule.value[i].laberror = gensched.value[i].laberror;
+                    let arr = [];
+                    arr = Object.keys(gensched);
+                    for(let i = 0; i < arr.length; i++){
+                        if(!(gensched[arr[i]].lecerror == null || gensched[arr[i]].lecerror == "")){
+                            countError.value += 1;
+                            errorTypeLec.value[arr[i]] = gensched[arr[i]].lecerror.slice(-8);
+                        }
+                        if(!(gensched[arr[i]].laberror == null || gensched[arr[i]].laberror == "")){
+                            countError.value += 1;
+                            errorTypeLab.value[arr[i]] = gensched[arr[i]].laberror.slice(-8);
+                        }
+                        preferredSchedule.value[parseInt(arr[i])].lecerror = gensched[arr[i]].lecerror;
+                        preferredSchedule.value[parseInt(arr[i])].laberror = gensched[arr[i]].laberror;
                     }
                 } else {
+                    fetchCurricula();
+                    fetchCurriculaStatus();
                     fetchClassSchedules();
                     toggleModal();
-                    fetchCurriculaStatus();
                     resetPref();
+                    resetStartTime();
                 }
-                
             }
         }
 
@@ -2313,12 +2650,18 @@ export default {
                 alert("Time range must be atleast within an hour.");
             else if((model2.value.StartTime <= '12:00' && model2.value.EndTime >= '13:00') || (model2.value.StartTime <= '12:00' && model2.value.EndTime <= '13:00' && model2.value.EndTime > '12:00') || (model2.value.StartTime >= '12:00' && model2.value.StartTime < '13:00' && model2.value.EndTime >= '13:00'))
                 alert("A Schedule cannot be save within the Lunch Time Period.");
+            else if(model2.value.Session == "Lecture" && minET-minST > subjectUnits.value.lec * 60)
+                alert("The selected time range exceeded the equivalent hours per lecture unit.");
+            else if(model2.value.Session == "Laboratory" && minET-minST > subjectUnits.value.lab * 3 * 60)
+                alert("The selected time range exceeded the equivalent hours per laboratory unit.");
             else{
-                let tempClassSchedule = await APIController.CreateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, model2.value.Day, model2.value.StartTime, model2.value.EndTime, model2.value.Subject, model2.value.Faculty, model2.value.Classroom, localStorage.getItem('userID'));
+                console.log(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, model2.value.Day, model2.value.StartTime, model2.value.EndTime, model2.value.Subject, model2.value.Session, model2.value.Faculty, model2.value.Classroom, localStorage.getItem('userID'), " ");
+                let tempClassSchedule = await APIController.CreateClassSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, schedule.value, model2.value.Day, model2.value.StartTime, model2.value.EndTime, model2.value.Subject, model2.value.Session, model2.value.Faculty, model2.value.Classroom, localStorage.getItem('userID'));
+                console.log(tempClassSchedule);
                 if(tempClassSchedule){
-                    fetchClassSchedules(),
-                    fetchCurriculaStatus();
                     fetchCurricula();
+                    fetchCurriculaStatus(),
+                    fetchClassSchedules();
                     reset();
                     toggleModalAdd();
                 }
@@ -2326,7 +2669,7 @@ export default {
         }
 
         const fetchClassSchedulesREG = async () => {
-            classscheduleListREG.value = await APIController.FetchClassSchedules(registrar.value.registrar, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
+            classscheduleListREG.value = await APIController.FetchClassSchedules(registrar.value.registrar);
             let crCS = await APIController.FetchClassSchedulesInfo(registrar.value.registrar, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
             classInfo.value.count = crCS.length;
             if(crCS){
@@ -2337,15 +2680,52 @@ export default {
             }
 
             eventsREG.value = classscheduleListREG.value.map(function (element){
-                let properties = {
-                    "start": element.day.concat(" "+element.startTime),
-                    "end": element.day.concat(" "+element.endTime),
-                    "title": element.Subject_Name,
-                    "content": element.Faculty_Name+"<br>"+element.Building_No+" "+element.Classroom_No,
-                    "class": "faculty",
-                };
+                let properties = {};
+                if(element.user_id == localStorage.getItem('userID')){
+                    properties = {
+                        "start": element.day.concat(" "+element.startTime),
+                        "end": element.day.concat(" "+element.endTime),
+                        "title": element.Subject_Name,
+                        "content": element.Faculty_Name+"<br>"+element.Building_No+" "+element.Classroom_No,
+                        "class": "saved1classREG"+element.session,
+                        "session": element.session,
+                        "units": "Units: "+(element.lec+element.lab)+" | Lec: "+element.lec+" | Lab: "+element.lab,
+                        "dayy": element.dayy,
+                        "subject": element.Subject_Name,
+                        "subjectcode": element.Subject_Code,
+                        "faculty": element.Faculty_Name,
+                        "classroom": element.Building_No+"-"+element.Classroom_No,
+                        "timee": element.startTime.slice(0, -3)+" - "+element.endTime.slice(0, -3)
+                    }
+                } else {
+                    properties = {
+                        "start": element.day.concat(" "+element.startTime),
+                        "end": element.day.concat(" "+element.endTime),
+                        "title": element.Subject_Name,
+                        "content": element.Faculty_Name+"<br>"+element.Building_No+" "+element.Classroom_No,
+                        "class": "saved2classREG"+element.session,
+                        "session": element.session,
+                        "units": "Units: "+(element.lec+element.lab)+" | Lec: "+element.lec+" | Lab: "+element.lab,
+                        "dayy": element.dayy,
+                        "subject": element.Subject_Name,
+                        "subjectcode": element.Subject_Code,
+                        "faculty": element.Faculty_Name,
+                        "classroom": element.Building_No+"-"+element.Classroom_No,
+                        "timee": element.startTime.slice(0, -3)+" - "+element.endTime.slice(0, -3)
+                    }
+                }
                 return properties;
             });
+
+            for (let q = 0; q < days.value.length; q++) {
+                eventsREG.value.push({
+                    start: days.value[q]+' 12:00',
+                    end: days.value[q]+' 13:00',
+                    title: 'LUNCH',
+                    class: 'lunch',
+                    background: true
+                });
+            }
         }
 
         const fetchFacultySchedules = async () => {
@@ -2359,18 +2739,54 @@ export default {
                     factInfo.value.labU = factInfo.value.labU + e.lab;
                 });
             }
-            
 
             eventss.value = facultyscheduleList.value.map(function (element){
-                let properties = {
-                    "start": element.day.concat(" "+element.startTime),
-                    "end": element.day.concat(" "+element.endTime),
-                    "title": element.Subject_Name,
-                    "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" || "+element.Building_No+" "+element.Classroom_No+"<br>[ Lec: "+element.lec+" - Lab: "+element.lab+" ]",
-                    "class": "faculty",
-                };
+                let properties = {};
+                if(element.user_id == localStorage.getItem('userID')){
+                    properties = {
+                        "start": element.day.concat(" "+element.startTime),
+                        "end": element.day.concat(" "+element.endTime),
+                        "title": element.Subject_Name,
+                        "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" || "+element.Building_No+" "+element.Classroom_No+"<br>[ Lec: "+element.lec+" - Lab: "+element.lab+" ]",
+                        "class": "saved1faculty"+element.session,
+                        "session": element.session,
+                        "units": "Units: "+(element.lec+element.lab)+" | Lec: "+element.lec+" | Lab: "+element.lab,
+                        "dayy": element.dayy,
+                        "subject": element.Subject_Name,
+                        "subjectcode": element.Subject_Code,
+                        "classroom": element.Building_No+"-"+element.Classroom_No,
+                        "course": element.Course_Code+" - "+element.yearLevel+" "+element.block,
+                        "timee": element.startTime.slice(0, -3)+" - "+element.endTime.slice(0, -3)
+                    }
+                } else {
+                    properties = {
+                        "start": element.day.concat(" "+element.startTime),
+                        "end": element.day.concat(" "+element.endTime),
+                        "title": element.Subject_Name,
+                        "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" || "+element.Building_No+" "+element.Classroom_No+"<br>[ Lec: "+element.lec+" - Lab: "+element.lab+" ]",
+                        "class": "saved2faculty"+element.session,
+                        "session": element.session,
+                        "units": "Units: "+(element.lec+element.lab)+" | Lec: "+element.lec+" | Lab: "+element.lab,
+                        "dayy": element.dayy,
+                        "subject": element.Subject_Name,
+                        "subjectcode": element.Subject_Code,
+                        "classroom": element.Building_No+"-"+element.Classroom_No,
+                        "course": element.Course_Code+" - "+element.yearLevel+" "+element.block,
+                        "timee": element.startTime.slice(0, -3)+" - "+element.endTime.slice(0, -3)
+                    }
+                }
                 return properties;
             });
+
+            for (let q = 0; q < days.value.length; q++) {
+                eventss.value.push({
+                    start: days.value[q]+' 12:00',
+                    end: days.value[q]+' 13:00',
+                    title: 'LUNCH',
+                    class: 'lunch',
+                    background: true
+                });
+            }
         }
 
         const fetchClassroomSchedules = async () => {
@@ -2386,15 +2802,52 @@ export default {
             }
 
             eventsss.value = classroomscheduleList.value.map(function (element){
-                let properties = {
-                    "start": element.day.concat(" "+element.startTime),
-                    "end": element.day.concat(" "+element.endTime),
-                    "title": element.Subject_Name,
-                    "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" [ Lec: "+element.lec+" - Lab: "+element.lab+" ] <br>"+element.Faculty_Name,
-                    "class": "classroom",
-                };
+                let properties = {};
+                if(element.user_id == localStorage.getItem('userID')){
+                    properties = {
+                        "start": element.day.concat(" "+element.startTime),
+                        "end": element.day.concat(" "+element.endTime),
+                        "title": element.Subject_Name,
+                        "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" [ Lec: "+element.lec+" - Lab: "+element.lab+" ] <br>"+element.Faculty_Name,
+                        "class": "saved1classroom"+element.session,
+                        "session": element.session,
+                        "units": "Units: "+(element.lec+element.lab)+" | Lec: "+element.lec+" | Lab: "+element.lab,
+                        "dayy": element.dayy,
+                        "subject": element.Subject_Name,
+                        "subjectcode": element.Subject_Code,
+                        "faculty": element.Faculty_Name,
+                        "course": element.Course_Code+" - "+element.yearLevel+" "+element.block,
+                        "timee": element.startTime.slice(0, -3)+" - "+element.endTime.slice(0, -3)
+                    }
+                } else {
+                    properties = {
+                        "start": element.day.concat(" "+element.startTime),
+                        "end": element.day.concat(" "+element.endTime),
+                        "title": element.Subject_Name,
+                        "content": element.Course_Code+" "+element.yearLevel+"-"+element.block+" [ Lec: "+element.lec+" - Lab: "+element.lab+" ] <br>"+element.Faculty_Name,
+                        "class": "saved2classroom"+element.session,
+                        "session": element.session,
+                        "units": "Units: "+(element.lec+element.lab)+" | Lec: "+element.lec+" | Lab: "+element.lab,
+                        "dayy": element.dayy,
+                        "subject": element.Subject_Name,
+                        "subjectcode": element.Subject_Code,
+                        "faculty": element.Faculty_Name,
+                        "course": element.Course_Code+" - "+element.yearLevel+" "+element.block,
+                        "timee": element.startTime.slice(0, -3)+" - "+element.endTime.slice(0, -3)
+                    }
+                }
                 return properties;
             });
+
+            for (let q = 0; q < days.value.length; q++) {
+                eventsss.value.push({
+                    start: days.value[q]+' 12:00',
+                    end: days.value[q]+' 13:00',
+                    title: 'LUNCH',
+                    class: 'lunch',
+                    background: true
+                });
+            }
         }
 
         const fetchClassSchedules = async () => {
@@ -2402,18 +2855,34 @@ export default {
             let csi1_ = await APIController.FetchClassSchedulesInfoUser(schedule.value, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID'));
             let csi2_ = await APIController.FetchClassSchedulesInfo(schedule.value, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
             
+            CSI1.value.total = curriculumStatus.value.length;
+            CSI2.value.total = curriculumStatus.value.length + curriculumStatusOther.value.length;
+
+            curriculumStatus.value.forEach(e => {
+                CSI1.value.lecU = CSI1.value.lecU + e.lec;
+                CSI1.value.labU = CSI1.value.labU + e.lab;
+            });
+            CSI2.value.lecU = CSI1.value.lecU;
+            CSI2.value.labU = CSI1.value.labU;
+            curriculumStatusOther.value.forEach(e => {
+                CSI2.value.lecU = CSI2.value.lecU + e.lec;
+                CSI2.value.labU = CSI2.value.labU + e.lab;
+            });
+
             if(csi1_){    
                 CSI1.value.count = csi1_.length;
                 csi1_.forEach(e => {
-                    CSI1.value.lecU = CSI1.value.lecU + e.lec;
-                    CSI1.value.labU = CSI1.value.labU + e.lab;
+                    CSI1.value.hours = CSI1.value.hours + e.Hours;
+                    CSI1.value.hourslec = CSI1.value.hourslec + e.HoursLec;
+                    CSI1.value.hourslab = CSI1.value.hourslab + e.HoursLab;
                 });
             }
             if(csi2_){
                 CSI2.value.count = csi2_.length;
                 csi2_.forEach(e => {
-                    CSI2.value.lecU = CSI2.value.lecU + e.lec;
-                    CSI2.value.labU = CSI2.value.labU + e.lab;
+                    CSI2.value.hours = CSI2.value.hours + e.Hours;
+                    CSI2.value.hourslec = CSI2.value.hourslec + e.HoursLec;
+                    CSI2.value.hourslab = CSI2.value.hourslab + e.HoursLab;
                 });
             }
 
@@ -2421,7 +2890,6 @@ export default {
 
             let temp = '';
             for (let i = 0; i < Object.keys(classscheduleList.value).length; i++) {
-                console.log(classscheduleList.value[i].Subject_Name);
                 if(temp != classscheduleList.value[i].Subject_Name){
                     temp = classscheduleList.value[i].Subject_Name;
                 }
@@ -2430,29 +2898,28 @@ export default {
             events.value = classscheduleList.value.map(function (element){
                 let properties = {};
                 if(element.user_id == localStorage.getItem('userID')){
-                        properties = {
+                    properties = {
                         "start": element.day.concat(" "+element.startTime),
                         "end": element.day.concat(" "+element.endTime),
                         "title": element.Subject_Name,
                         "content": element.Faculty_Name+"<br>"+element.Building_No+" "+element.Classroom_No,
-                        "class": "saved1",
+                        "class": "saved1"+element.session,
                         "s_id": element.subject_id,
                         "id": element.id,
                         "userID": element.user_id
                     }
                 } else {
-                        properties = {
+                    properties = {
                         "start": element.day.concat(" "+element.startTime),
                         "end": element.day.concat(" "+element.endTime),
                         "title": element.Subject_Name,
                         "content": element.Faculty_Name+"<br>"+element.Building_No+" "+element.Classroom_No,
-                        "class": "saved2",
+                        "class": "saved2"+element.session,
                         "s_id": element.subject_id,
                         "id": element.id,
                         "userID": element.user_id
                     }
                 }
-                
                 return properties;
             });
 
@@ -2474,7 +2941,6 @@ export default {
                     background: true
                 });
             }
-            //recommender engine on word
         }
 
         const GetClassSchedule = async () => {
@@ -2505,24 +2971,25 @@ export default {
             else{
                 let tempClassSchedule = await APIController.UpdateClassSchedule(schedule.value, model3Edit.value.day, model3Edit.value.startTime, model3Edit.value.endTime, model3Edit.value.subject_id, model3Edit.value.faculty_id, model3Edit.value.classroom_id, classscheduleID.value, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
                 if(tempClassSchedule){
-                    fetchClassSchedules();
-                    fetchCurriculaStatus();
                     fetchCurricula();
+                    fetchCurriculaStatus();
+                    fetchClassSchedules();
                     classscheduleID.value = false;
                     toggleModalUpdate();
                     cancel();
                     showModalEditMode.value = false;
                 }
             }
-            // console.log(tempClassSchedule);
         }
 
         const mergeClassSchedule = async () => {
             merge1.value = await APIController.FetchClassScheduleM(classscheduleID.value);
             merge2.value = await APIController.FetchClassScheduleM(mergeClass.value.mergeClass);
-
-            let tempClassSchedule = await APIController.MergeClassSchedule(merge1.value.schedule_id, merge1.value.day, merge1.value.startTime, merge1.value.endTime, merge1.value.subject_id, merge1.value.faculty_id, merge1.value.classroom_id, classscheduleID.value, merge2.value.schedule_id, merge2.value.day, merge2.value.startTime, merge2.value.endTime, merge2.value.subject_id, merge2.value.faculty_id, merge2.value.classroom_id, mergeClass.value.mergeClass);
+ 
+            let tempClassSchedule = await APIController.MergeClassSchedule(merge1.value.schedule_id, merge2.value.schedule_id, merge2.value.day, merge2.value.startTime, merge2.value.endTime, merge2.value.subject_id, merge2.value.faculty_id, merge2.value.classroom_id, classscheduleID.value, mergeClass.value.mergeClass, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
                 if(tempClassSchedule){
+                    fetchCurricula();
+                    fetchCurriculaStatus();
                     fetchClassSchedules();
                     classscheduleID.value = false;
                     cancel();
@@ -2534,9 +3001,9 @@ export default {
             const success = await APIController.DeleteClassSchedule(classscheduleID.value);
             if (success) {
                 cancel(),
-                fetchClassSchedules();
-                fetchCurriculaStatus();
                 fetchCurricula();
+                fetchCurriculaStatus();
+                fetchClassSchedules();
                 showModalEditMode.value = false;
                 showModalDeleteSched.value = false;
             }
@@ -2545,9 +3012,9 @@ export default {
         const deleteClassSchedulesReset = async () => {
             const success = await APIController.DeleteClassSchedulesReset(schedule.value, localStorage.getItem('userID'));
             if (success) {
-                fetchClassSchedules();
-                fetchCurriculaStatus();
                 fetchCurricula();
+                fetchCurriculaStatus();
+                fetchClassSchedules();
                 toggleModalDeleteSchedules();
             }
         }
@@ -2557,38 +3024,60 @@ export default {
         //     // console.log(model.value.selectedCollege);
         // }
 
+        const fetchSubjectUnits = async (id) => {
+            subjectUnits.value = await APIController.FetchSubjectUnits(id, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel);
+        }
+
         const fetchFaculties = async (id) => {
-            facultyList.value = await APIController.FetchFacultiesBySubject(id);
+            facultyList.value = await APIController.FetchFacultiesBySubject(id, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel);
         }
 
         const fetchSchedulesCollege = async () => {
             schedulesList.value = await APIController.FetchSchedulesByCollege(localStorage.getItem('collegeId'), modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
         }
 
-        const fetchClassroomsCollege = async () => {
-            classroomsList.value = await APIController.FetchClassroomsByCollege(localStorage.getItem('collegeId'));
+        // const fetchClassroomsCollege = async () => {
+        //     classroomsList.value = await APIController.FetchClassroomsByCollege(localStorage.getItem('collegeId'));
+        // }
+
+        const fetchClassroomsCollegeReports = async () => {
+            if(localStorage.getItem('userType') == 'reg')
+            classroomsListReport.value = await APIController.FetchClassroomsByCollegeReports(localStorage.getItem('collegeId'), modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
+            else
+            classroomsListReport.value = await APIController.FetchClassroomsByDepartmentReports(localStorage.getItem('userID'), modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
         }
 
-        const fetchFacultiesCollege = async () => {
-            facultiesList.value = await APIController.FetchFacultiesByCollege(localStorage.getItem('collegeId'));
+        // const fetchFacultiesCollege = async () => {
+        //     facultiesList.value = await APIController.FetchFacultiesByCollege(localStorage.getItem('collegeId'));
+        // }
+
+        const fetchFacultiesReports = async () => {
+            if(localStorage.getItem('userType') == 'reg')
+            facultiesListReport.value = await APIController.FetchFacultiesByCollegeReports(localStorage.getItem('collegeId'), modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
+            else
+            facultiesListReport.value = await APIController.FetchFacultiesByDepartmentReports(college.value.id, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
         }
 
-        const fetchFacultiesDepartment = async () => {
-            facultiesList.value = await APIController.FetchFacultiesByDepartment(college.value.id);
-        }
+        // const fetchFacultiesDepartment = async () => {
+        //     facultiesList.value = await APIController.FetchFacultiesByDepartment(college.value.id);
+        // }
+
+        // const fetchFacultiesDepartmentReports = async () => {
+        //     facultiesListReport.value = await APIController.FetchFacultiesByDepartmentReports(college.value.id, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
+        // }
 
         // const fetchMajorClassrooms = async () => {
         //     classroomList.value = await APIController.FetchMajorClassrooms(model.value.selectedCollege);
         //     // console.log(model.value.selectedCollege);
         // }
 
-        const fetchClassrooms = async (id) => {
-            classroomList.value = await APIController.FetchClassroomsBySubject(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, id);
+        const fetchClassrooms = async (type) => {
+            classroomList.value = await APIController.FetchClassroomsBySubject(subjectUnits.value.id, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel, type);
         }
 
-        const fetchClassScheduleMajor = async () => { // parameters are college id, subject id, year level and schedule id(?)
+        const fetchClassScheduleMajor = async (type) => { // parameters are college id, subject id, year level and schedule id(?)
             // console.log(model3.value.subject_id, model.value.selectedCourse, model.value.selectedYearLevel, classscheduleID.value)
-            classScheduleMajor.value = await APIController.FetchClassSchedulesMergingMajor(model3.value.subject_id, model.value.selectedCourse, model.value.selectedYearLevel, schedule.value);
+            classScheduleMajor.value = await APIController.FetchClassSchedulesMergingMajor(model3.value.subject_id, model.value.selectedCourse, model.value.selectedYearLevel, schedule.value, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, type);
             for(let i = 0; i < classScheduleMajor.value.length; i++){
                 switch (classScheduleMajor.value[i].day){
                     case '2022-08-01':
@@ -2617,8 +3106,8 @@ export default {
             // console.log(model3.value.subject_id, model.value.selectedCourse, model.value.selectedYearLevel, schedule.value)
         }   
 
-        const fetchClassScheduleMinor = async () => {// parameters are subject id and schedule id(?)
-            classScheduleMinor.value = await APIController.FetchClassSchedulesMergingMinor(model3.value.subject_id, schedule.value);
+        const fetchClassScheduleMinor = async (type) => {// parameters are subject id and schedule id(?)
+            classScheduleMinor.value = await APIController.FetchClassSchedulesMergingMinor(model3.value.subject_id, schedule.value, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, type);
             for(let i = 0; i < classScheduleMinor.value.length; i++){
                 switch (classScheduleMinor.value[i].day){
                     case '2022-08-01':
@@ -2666,29 +3155,32 @@ export default {
         // }
 
         function onEventClick(event) {
+            fetchSubjectUnits(event.s_id);
             fetchFaculties(event.s_id);
-            fetchClassrooms(event.s_id);
-            if(event.class == "saved1" && event.userID == localStorage.getItem('userID'))
+            if((event.class == "saved1Lecture" || event.class == "saved1Laboratory") && event.userID == localStorage.getItem('userID'))
             {
                 loading.value = true;
                 classscheduleID.value = event.id;
                 GetClassSchedule().then(()=>{
                     localStorage.setItem('clickSubj', model3.value.Subject_Type);
-                    if (model3.value.Subject_Type === "Major"){
+                    fetchClassrooms(model3.value.session);
+                    if (model3.value.Subject_Type === "Major" || model3.value.Subject_Type === "Elective"){
                         clickSubj.value = localStorage.getItem('clickSubj');
-                        fetchClassScheduleMajor();
+                        fetchClassScheduleMajor(model3.value.session);
                     }else{
                         // localStorage.getItem('clickSubj');
                         clickSubj.value = localStorage.getItem('clickSubj');
-                        fetchClassScheduleMinor();
+                        fetchClassScheduleMinor(model3.value.session);
                     }
                 });
+                
+                
                 // console.log(model3.value)
             } else if(event.class == 'lunch'){
 
             } else if(event.userID != localStorage.getItem('userID')) {
 
-            } else if(event.class == "saved2"){
+            } else if(event.class == "saved2Lecture" || event.class == "saved2Laboratory"){
 
             }
             else {
@@ -2713,6 +3205,36 @@ export default {
             
         }
 
+        const showModalFacultyEvent = ref(false);
+
+        function onEventClickFaculty(event){
+            if(event.class == 'lunch'){
+            }else{
+                facultyevent.value = event;
+                showModalFacultyEvent.value = true; 
+            }
+        }
+
+        const showModalClassroomEvent = ref(false);
+
+        function onEventClickClassroom(event){
+            if(event.class == 'lunch'){
+            }else{
+                classroomevent.value = event;
+                showModalClassroomEvent.value = true;  
+            }
+        }
+
+        const showModalClassREGEvent = ref(false);
+
+        function onEventClickREG(event){
+            if(event.class == 'lunch'){
+            }else{
+                classregevent.value = event;
+                showModalClassREGEvent.value = true;  
+            }
+        }
+
         function cancel () {
             classscheduleID.value = false;
             reset();
@@ -2720,14 +3242,6 @@ export default {
 
         const GetCollege = async () => {
             college.value = await APIController.FetchCollege(localStorage.getItem('username'));
-            if(localStorage.getItem('userType') == 'reg'){
-                fetchFacultiesCollege();
-            } else {
-                fetchFacultiesDepartment();
-            }
-            userType.value = localStorage.getItem('userType');
-            fetchClassroomsCollege();
-            
         }
 
         return {
@@ -2745,12 +3259,20 @@ export default {
             schedule,
             // major,
             // fetchMajorFaculty,
+            fetchSubjectUnits,
+            subjectUnits,
             fetchFaculties,
             facultyList,
             classroomList,
             fetchClassrooms,
             // fetchMajorClassrooms,
             onEventClick,
+            onEventClickFaculty,
+            onEventClickClassroom,
+            onEventClickREG,
+            facultyevent,
+            classroomevent,
+            classregevent,
             x$,
             model2,
             reset,
@@ -2769,16 +3291,17 @@ export default {
             curriculumList,
             delete_recommend,
             fetchYearLevel,
+            fetchBlock,
             yearLevelList,
+            block,
             subjectList,
             subjectListUpdate,
             deleteCS,
             resetB,
-            classroomsList,
-            fetchClassroomsCollege,
-            facultiesList,
-            fetchFacultiesCollege,
-            fetchFacultiesDepartment,
+            classroomsListReport,
+            fetchClassroomsCollegeReports,
+            facultiesListReport,
+            fetchFacultiesReports,
             GetCollege,
             viewSchedule,
             eventss,
@@ -2831,7 +3354,9 @@ export default {
             chooseStartTimeA,
             // showPref,
             generateClassSchedule,
+            resetSession,
             resetPref,
+            resetStartTime,
             curriculumListNotSave,
             fetchCurriculaStatus,
             curriculumStatus,
@@ -2882,19 +3407,70 @@ export default {
 
             printClassSchedule,
             printFacultySchedule,
-            printClassroomSchedule
+            printClassroomSchedule,
+
+            showModalFacultyEvent,
+            showModalClassroomEvent,
+            showModalClassREGEvent,
+
+            countError,
+            getError,
+            errorTypeLec,
+            errorTypeLab,
+            getErrorF,
+            getErrorS,
+
+            data,
+            config,
+            newClickHandler,
+            handleHover,
+            handleLeave,
+            showClasses,
+            legendLabel,
+            myChart,
+            fetchTotalClasses,
+            totalClasses,
+            completeCount,
+            incompleteCount,
+            withoutCount
         }
     },
     mounted () {
+        
         if (this.classscheduleID != false){
             this.GetClassSchedule();
         }
         // this.GetClassSchedule();
         this.GetCollege();
-        // this.fetchClassScheduleMajor();
+        
+        document.getElementById('myChart').onclick = this.clickHandler;
     },
     methods: {
+        clickHandler(evt) {
+            var points = this.myChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length) {
+                const firstPoint = points[0];
+                const label = this.myChart.data.labels[firstPoint.index];
+                const value = this.myChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+                
+                // if(label == "With Complete Saved Schedules"){
+                //     // fetch something
+                // } else if(label == "With Incomplete Saved Schedules") {
+
+                // } else {
+
+                // }
+                this.legendLabel = label;
+                this.showClasses =true;
+            }
+        },
         onChangeSubject(e){
+            return e.target.value;
+        },
+        onChangeSession(e){
+            return e.target.value;
+        },
+        onChangeYearLevel(e){
             return e.target.value;
         },
     }
@@ -2902,13 +3478,49 @@ export default {
 </script>
 
 <style>
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #b5e3f7;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #38bdf8 transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .loader {
   border: 16px solid #f3f3f3;
   border-top: 16px solid #3498db;
   border-radius: 50%;
   width: 36px;
   height: 36px;
-  animation: spin 5s linear infinite;
+  animation: spin 3s linear infinite;
 }
 
 .textBox {
@@ -2922,7 +3534,7 @@ export default {
   position: absolute;
   white-space: nowrap;
   transform: translateX(0);
-  transition: 4s;
+  transition: 8s;
 }
 .textBox:hover span {
   transform: translateX(calc(90px - 100%));
@@ -2939,10 +3551,10 @@ export default {
   position: absolute;
   white-space: nowrap;
   transform: translateX(0);
-  transition: 8s;
+  transition: 12s;
 }
 .textBox2:hover span {
-  transform: translateX(calc(200px - 100%));
+  transform: translateX(calc(150px - 80%));
 }
 
 @keyframes spin {
@@ -2966,13 +3578,23 @@ export default {
 .vuecal__event {cursor: pointer; vertical-align: middle;}
 .vuecal__cell--selected:before {border-color: rgba(132, 205, 236);}
 
-.vuecal__event.saved1 { background-color: rgba(69, 194, 252, 0.65);border: 1px solid rgb(9, 81, 129);border-radius: 12px;color: rgb(9, 81, 129);}
-.vuecal__event.saved2 {cursor: not-allowed; background-color: rgba(109, 216, 219, 0.65);border: 1px solid rgb(2, 93, 109);border-radius: 12px;color: rgb(2, 93, 109);}
-.vuecal__event.recommend1 {background-color: rgba(133, 215, 253, 0.3);border: 1px solid rgb(133, 204, 236);border-radius: 12px;color: #3f3f46;}
-.vuecal__event.recommend2 {cursor: not-allowed; background-color: rgba(252, 145, 69, 0.3);border: 1px solid rgb(233, 179, 129);border-radius: 12px;color: #3f3f46;}
+.vuecal__event.saved1Lecture { background-color: rgba(98, 205, 255, 0.85);border: 1px solid #2C4899;border-radius: 12px;color: #253B80;}
+.vuecal__event.saved1Laboratory { background-color: rgba(151, 222, 255, 0.70);border: 1px solid #2C4899;border-radius: 12px;color: #253B80;}
+.vuecal__event.saved2Lecture {cursor: not-allowed; background-color: rgba(109, 216, 219, 0.85);border: 1px solid rgb(2, 93, 109);border-radius: 12px;color: rgb(2, 93, 109);}
+.vuecal__event.saved2Laboratory {cursor: not-allowed; background-color: rgba(165, 240, 243, 0.7);border: 1px solid rgb(2, 93, 109);border-radius: 12px;color: rgb(2, 93, 109);}
 
-.vuecal__event.classroom {cursor: text; background-color: rgba(80, 195, 248, 0.65);border: 1px solid rgb(144, 214, 247);border-radius: 12px;color: #565658;}
-.vuecal__event.faculty {cursor: text; background-color: rgb(14, 165, 233, 0.65);border: 1px solid rgb(108, 207, 253);border-radius: 12px;color: #3f3f46;}
+.vuecal__event.saved1classroomLecture {background-color: rgba(14, 165, 233, 0.65);border: 1px solid rgb(144, 214, 247);border-radius: 12px;color: #1E3066;}
+.vuecal__event.saved1classroomLaboratory {background-color: rgba(116, 203, 243, 0.65);border: 1px solid rgb(144, 214, 247);border-radius: 12px;color: #1E3066;}
+.vuecal__event.saved2classroomLecture {background-color: rgba(109, 216, 219, 0.85);border: 1px solid rgb(157, 228, 231);border-radius: 12px;color: rgb(12 74 110);}
+.vuecal__event.saved2classroomLaboratory {background-color: rgba(163, 237, 240, 0.70);border: 1px solid rgb(157, 228, 231);border-radius: 12px;color: rgb(12 74 110);}
+.vuecal__event.saved1facultyLecture {background-color: rgb(14, 165, 233, 0.65);border: 1px solid rgb(108, 207, 253);border-radius: 12px;color: #1E3066;}
+.vuecal__event.saved1facultyLaboratory {background-color: rgba(116, 203, 243, 0.65);border: 1px solid rgb(108, 207, 253);border-radius: 12px;color: #1E3066;}
+.vuecal__event.saved2facultyLecture {background-color: rgba(109, 216, 219, 0.85);border: 1px solid rgb(157, 228, 231);border-radius: 12px;color: rgb(12 74 110);}
+.vuecal__event.saved2facultyLaboratory {background-color: rgba(163, 237, 240, 0.70);border: 1px solid rgb(157, 228, 231);border-radius: 12px;color: rgb(12 74 110);}
+.vuecal__event.saved1classREGLecture {background-color: rgb(14, 165, 233, 0.65);border: 1px solid rgb(108, 207, 253);border-radius: 12px;color: #1E3066;}
+.vuecal__event.saved1classREGLaboratory {background-color: rgba(116, 203, 243, 0.65);border: 1px solid rgb(108, 207, 253);border-radius: 12px;color: #1E3066;}
+.vuecal__event.saved2classREGLecture {background-color: rgba(109, 216, 219, 0.85);border: 1px solid rgb(157, 228, 231);border-radius: 12px;color: rgb(12 74 110);}
+.vuecal__event.saved2classREGLaboratory {background-color: rgba(163, 237, 240, 0.70);border: 1px solid rgb(157, 228, 231);border-radius: 12px;color: rgb(12 74 110);}
 
 .vuecal__event.lunch {
   cursor: not-allowed;

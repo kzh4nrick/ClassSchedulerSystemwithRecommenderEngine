@@ -203,6 +203,23 @@ export default {
         }
     },
 
+    FetchSubjectUnits: (id, AY, sem, c_id, YL) => {
+        if (id != null) {
+            return fetch(API_BASE + "/subjects-curriculum/" + id + "/" + AY + "/" + sem + "/" + c_id + "/" + YL)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    return data.response.subject;
+                } else {
+                    throw data.response.error;
+                }
+            })
+            .catch(err => {
+                alert(err)
+            });
+        }
+    },
+
     CreateSubject: (Subject_Code = "", Subject_Name = "", Subject_Type = "", course_id = "", department_id = "") => {
         if (
             Subject_Code == "" || 
@@ -505,6 +522,22 @@ export default {
             });
         }
     },
+    FetchCourseBlock: (id, AY, sem) => {
+        if (id != null) {
+            return fetch(API_BASE + "/courses/block/" + id + "/" + AY + "/" + sem)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    return data.response.block;
+                } else {
+                    throw data.response.error;
+                }
+            })
+            .catch(err => {
+                alert(err)
+            });
+        }
+    },
     CreateCourse: (Course_Code = "", Course_Name = "", department_id = "") => {
         if (
             Course_Code == "" || 
@@ -535,6 +568,40 @@ export default {
             alert(err);
         });
     },
+    CreateCourseBlock: (course_id = "", academicYear = "", semester = "", first = "", second = "", third = "", fourth = "") => {
+        if (
+            course_id == "" || 
+            academicYear == "" ||
+            semester == "" ||
+            first == "" ||
+            second == "" ||
+            third == "" ||
+            fourth == ""
+
+        ) {
+            return false;
+        }
+
+        return fetch(API_BASE + "/courses/blocks/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ course_id, academicYear, semester, first, second, third, fourth })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("New record has been saved.");
+                return data.response.block;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err);
+        });
+    },
     DeleteCourse: id => {
         if (id != null) {
             return fetch(API_BASE + "/courses/delete/" + id, {
@@ -553,6 +620,39 @@ export default {
                     alert(err);
                 });
         }
+    },
+    UpdateCourseBlock: (course_id = "", academicYear = "", semester = "", first = "", second = "", third = "", fourth = "") => {
+        if (
+            course_id == "" ||
+            academicYear == "" ||
+            semester == "" ||
+            first == "" ||
+            second == "" ||
+            third == "" ||
+            fourth == ""
+        ) {
+            return false;
+        }
+
+        return fetch(API_BASE + "/courses/block/update/" + course_id + "/" + academicYear + "/" + semester, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ first, second, third, fourth })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Updated Successfully.");
+                return data.response.block;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err);
+        });
     },
     UpdateCourse: (Course_Code = "", Course_Name = "", department_id = "", id = "") => {
         if (
@@ -643,8 +743,38 @@ export default {
             alert(err);
         }); 
     },
+    FetchFacultiesByCollegeReports: (id, AY, sem) => {
+        return fetch(API_BASE + "/faculties/college/reports/" + id + "/" + AY + "/" + sem)
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                return data.response.faculties;
+            } else {
+                throw data.response.error;
+            }
+
+        })
+        .catch(err => {
+            alert(err);
+        }); 
+    },
     FetchFacultiesByDepartment: id => {
         return fetch(API_BASE + "/faculties/department/" + id)
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                return data.response.faculties;
+            } else {
+                throw data.response.error;
+            }
+
+        })
+        .catch(err => {
+            alert(err);
+        }); 
+    },
+    FetchFacultiesByDepartmentReports: (id, AY, sem) => {
+        return fetch(API_BASE + "/faculties/department/reports/" + id + "/" + AY + "/" + sem)
         .then(response => response.json())
         .then(data => {
             if(data.success) {
@@ -720,9 +850,9 @@ export default {
             });
         }
     },
-    FetchFacultiesBySubject: id => {
+    FetchFacultiesBySubject: (id, AY, sem, c_id, YL) => {
         if (id != null) {
-            return fetch(API_BASE + "/faculties-subject/" + id)
+            return fetch(API_BASE + "/faculties-subject/" + id + "/" + AY + "/" + sem + "/" + c_id + "/" + YL)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -875,8 +1005,38 @@ export default {
             alert(err);
         }); 
     },
-    FetchClassroomsPerCollegeBySubject: s_id => {
-        return fetch(API_BASE + "/classrooms/college-subject/" + s_id)
+    FetchClassroomsByCollegeReports: (id, AY, sem) => {
+        return fetch(API_BASE + "/classrooms/college/reports/" + id + "/" + AY + "/" + sem)
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                return data.response.classrooms;
+            } else {
+                throw data.response.error;
+            }
+
+        })
+        .catch(err => {
+            alert(err);
+        }); 
+    },
+    FetchClassroomsByDepartmentReports: (id, AY, sem) => {
+        return fetch(API_BASE + "/classrooms/department/reports/" + id + "/" + AY + "/" + sem)
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                return data.response.classrooms;
+            } else {
+                throw data.response.error;
+            }
+
+        })
+        .catch(err => {
+            alert(err);
+        }); 
+    },
+    FetchClassroomsPerCollegeBySubject: (s_id, type) => {
+        return fetch(API_BASE + "/classrooms/college-subject/" + s_id + "/" + type)
         .then(response => response.json())
         .then(data => {
             if(data.success) {
@@ -968,9 +1128,9 @@ export default {
             });
         }
     },
-    FetchClassroomsBySubject: (AY, sem, id) => {
+    FetchClassroomsBySubject: (id, AY, sem, c_id, YL, type) => {
         if (id != null) {
-            return fetch(API_BASE + "/classrooms-subject/" + AY + "/" + sem + "/" + id)
+            return fetch(API_BASE + "/classrooms-subject/" + id + "/" + AY + "/" + sem + "/" + c_id + "/" + YL + "/" + type)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1388,6 +1548,21 @@ export default {
             alert(err);
         });
     },
+    FetchCurriculaTotals: (AY, sem, user) => {
+        return fetch(API_BASE + "/curricula-totals/" + AY + "/" + sem + "/" + user)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                return data.response.total;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err)
+        });
+    
+    },
     FetchCoursesCollege: id => {
         
             return fetch(API_BASE + "/courses/college/" + id)
@@ -1543,7 +1718,7 @@ export default {
         });
     
     },
-    CreateClassSchedule: (AY = "", sem = "", schedule_id = "", day = "", startTime = "", endTime = "", subject_id = "", faculty_id = "", classroom_id = "", user_id = "") => {
+    CreateClassSchedule: (AY = "", sem = "", schedule_id = "", day = "", startTime = "", endTime = "", subject_id = "", session = "", faculty_id = "", classroom_id = "", user_id = "") => {
         if (
             AY == "" ||
             sem == "" ||
@@ -1552,6 +1727,7 @@ export default {
             startTime == "" ||
             endTime == "" ||
             subject_id == "" ||
+            session == "" ||
             faculty_id == "" ||
             classroom_id == "" ||
             user_id == ""
@@ -1565,7 +1741,7 @@ export default {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ schedule_id, day, startTime, endTime, subject_id, faculty_id, classroom_id, user_id })
+            body: JSON.stringify({ schedule_id, day, startTime, endTime, subject_id, session, faculty_id, classroom_id, user_id })
         })
         .then(response => response.json())
         .then(data => {
@@ -1595,7 +1771,6 @@ export default {
             time_period == "" ||
             faculties == "" ||
             classrooms_lec == "" ||
-            classrooms_lab == "" ||
             user_id == ""
         ) {
             return false;
@@ -1621,6 +1796,7 @@ export default {
         .then(data => {
             if (data.success) {
                 alert("Generating of Schedules completed.");
+                return data.response.schedulessaved;
             } else {
                 return data.response.scheduleserror;
             }
@@ -1629,9 +1805,9 @@ export default {
             alert(err);
         });
     },
-    FetchClassSchedulesMergingMajor: (s_id, c_id, yL, id) => {
+    FetchClassSchedulesMergingMajor: (s_id, c_id, yL, id, AY, sem, type) => {
         if (id != null) {
-            return fetch(API_BASE + "/classschedules/merging/" + s_id + "/" + c_id + "/" + yL + "/" + id)
+            return fetch(API_BASE + "/classschedules/merging/" + s_id + "/" + c_id + "/" + yL + "/" + id + "/" + AY + "/" + sem + "/" + type)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1645,9 +1821,9 @@ export default {
             });
         }
     },
-    FetchClassSchedulesMergingMinor: (s_id, id) => {
+    FetchClassSchedulesMergingMinor: (s_id, id, AY, sem, type) => {
         if (id != null) {
-            return fetch(API_BASE + "/classschedules/merging/" + s_id + "/" + id)
+            return fetch(API_BASE + "/classschedules/merging/" + s_id + "/" + id + "/" + AY + "/" + sem + "/" + type)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1895,9 +2071,10 @@ export default {
                 });
         }
     },
-    MergeClassSchedule: (schedule_id = "", day = "", startTime = "", endTime = "", subject_id = "", faculty_id = "", classroom_id = "", id = "", schedule_id2 = "", day2 = "", startTime2 = "", endTime2 = "", subject_id2 = "", faculty_id2 = "", classroom_id2 = "", id2 = "") => {
+    MergeClassSchedule: (schedule_id = "", schedule_id2 = "", day = "", startTime = "", endTime = "", subject_id = "", faculty_id = "", classroom_id = "", id = "", id2 = "", AY = "", sem = "") => {
         if (
             schedule_id == "" ||
+            schedule_id2 == "" ||
             day == "" || 
             startTime == "" ||
             endTime == "" ||
@@ -1905,24 +2082,19 @@ export default {
             faculty_id == "" ||
             classroom_id == "" ||
             id == "" ||
-            schedule_id2 == "" ||
-            day2 == "" || 
-            startTime2 == "" ||
-            endTime2 == "" ||
-            subject_id2 == "" ||
-            faculty_id2 == "" ||
-            classroom_id2 == "" ||
-            id2 == ""
+            id2 == "" ||
+            AY == "" ||
+            sem == ""
         ) {
             return false;
         }
 
-        return fetch(API_BASE + "/classschedules/merge/" + id + "/" + id2, {
+        return fetch(API_BASE + "/classschedules/merge/" + id + "/" + id2 + "/" + AY + "/" + sem, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ schedule_id, day, startTime, endTime, subject_id, faculty_id, classroom_id, schedule_id2, day2, startTime2, endTime2, subject_id2, faculty_id2, classroom_id2 })
+            body: JSON.stringify({ schedule_id, schedule_id2, day, startTime, endTime, subject_id, faculty_id, classroom_id})
         })
         .then(response => response.json())
         .then(data => {
