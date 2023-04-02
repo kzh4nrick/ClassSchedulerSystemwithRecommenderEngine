@@ -170,28 +170,55 @@
         </div>
 
         <div v-if="sched == false && loading1 == false" class="max-w-[90vw] mx-auto my-[3vh] grid grid-cols-6 gap-x-5">
-            <div class="col-span-3 border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
-                <canvas id="myChart"></canvas>
-                <div v-if="showClasses" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+            <div v-if="userType == 'reg'" class="col-span-3 border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
+                <div v-if="loading2" class="top-1/3 lds-facebook"><div></div><div></div><div></div></div>
+                <canvas v-else-if="showChart" id="myChartALL"></canvas>
+                <div v-if="showClassesALL" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
                     <div class="relative w-auto mx-auto">
                         <!--content-->
                         <div class="border-0 rounded-lg shadow-lg relative bg-white flex flex-col w-full outline-none focus:outline-none">
                             <!--header-->
-                            <div class="flex flex-row items-center justify-between py-2 px-4 border-b border-solid rounded-t">
-                                <span class="text-sm text-[#253B80] font-roboto uppercase">LIST OF CLASSES {{ legendLabel }}
+                            <div class="flex flex-row items-center justify-center py-2 px-4 border-b border-solid rounded-t">
+                                <span class="text-sm text-[#253B80] font-roboto uppercase">LIST OF CLASSES FOR THE ENTIRE {{ legendCollege.College_Code }} {{ legendLabel }} &nbsp; [ {{ legendCount }} ]
                                 </span>
                                 <!-- <span class="text-gray-400 hover:text-gray-600 font-roboto text-lg mb-1">
                                     <button class="bg-transparent" v-on:click="showClasses = false">x</button>
                                 </span> -->
                             </div>
-                            <div class="overflow-auto w-auto max-w-[80vw] h-auto max-h-[60vh] my-2 mx-4 flex flex-col text-sm font-roboto text-[#2C4899]">
-                                <span class="py-px">List dgtdsgds</span>
-                                <span class="py-px">List dgtdsgds</span>
-                                <span class="py-px">List dgtdsgds</span>
-                                <span class="py-px">List dgtdsgds</span>
-                                <span class="py-px">List dgtdsgds</span>
-                                <span class="py-px">List dgtdsgds</span>
-                                <span class="py-px">List dgtdsgds</span>
+                            <div class="overflow-auto w-auto max-w-[80vw] h-auto max-h-[60vh] my-2 mx-4 flex flex-col text-sm font-semibold text-[#2C4899]">
+                                <div v-for="(cL, index) in classListsALL" :key="index" class="py-0.5">
+                                    <span>[ {{ cL.class_code }} ] &nbsp; {{ cL.program_name }} &nbsp;|&nbsp; {{ cL.yearLevel }} &nbsp;|&nbsp; {{ cL.block }}</span>
+                                </div>
+                            </div>
+                            <div class="mb-1 flex items-center justify-center border-t border-solid border-slate-200 rounded-b">
+                                <button class="mt-1 text-[#253B80] bg-transparent border border-solid border-[#253B80] hover:bg-[#253B80] hover:text-white active:bg-[#253B80] font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="showClasses = false">
+                                Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="showClassesALL" class="opacity-25 fixed inset-0 z-40 bg-slate-400"></div>
+            </div>
+            <div :class="userType == 'dept' ? 'col-span-6':'col-span-3'" class="border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
+                <div v-if="loading2" class="top-1/3 lds-facebook"><div></div><div></div><div></div></div>
+                <canvas v-else-if="showChart" id="myChart"></canvas>
+                <div v-if="showClasses" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+                    <div class="relative w-auto mx-auto">
+                        <!--content-->
+                        <div class="border-0 rounded-lg shadow-lg relative bg-white flex flex-col w-full outline-none focus:outline-none">
+                            <!--header-->
+                            <div class="flex flex-row items-center justify-center py-2 px-4 border-b border-solid rounded-t">
+                                <span class="text-sm text-[#253B80] font-roboto uppercase">LIST OF CLASSES {{ legendLabel }} &nbsp; [ {{ legendCount }} ]
+                                </span>
+                                <!-- <span class="text-gray-400 hover:text-gray-600 font-roboto text-lg mb-1">
+                                    <button class="bg-transparent" v-on:click="showClasses = false">x</button>
+                                </span> -->
+                            </div>
+                            <div class="overflow-auto w-auto max-w-[80vw] h-auto max-h-[60vh] my-2 mx-4 flex flex-col text-sm font-semibold text-[#2C4899]">
+                                <div v-for="(cL, index) in classLists" :key="index" class="py-0.5">
+                                    <span>[ {{ cL.class_code }} ] &nbsp; {{ cL.program_name }} &nbsp;|&nbsp; {{ cL.yearLevel }} &nbsp;|&nbsp; {{ cL.block }}</span>
+                                </div>
                             </div>
                             <div class="mb-1 flex items-center justify-center border-t border-solid border-slate-200 rounded-b">
                                 <button class="mt-1 text-[#253B80] bg-transparent border border-solid border-[#253B80] hover:bg-[#253B80] hover:text-white active:bg-[#253B80] font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="showClasses = false">
@@ -203,8 +230,8 @@
                 </div>
                 <div v-if="showClasses" class="opacity-25 fixed inset-0 z-40 bg-slate-400"></div>
             </div>
-            <div class="col-span-3 border border-[#436BE5]/[15%] shadow-xl shadow-[#436BE5]/[15%] rounded-md h-[70vh]">
-            </div>
+            <!-- <div :class="userType == 'dept' ? 'col-span-4':'col-span-2'" class="border border-[#436BE5]/[15%] shadow-xl shadow-[#436BE5]/[15%] rounded-md h-[70vh]">
+            </div> -->
         </div>                
         <div v-if="loading1" class="relative inset-x-2/4 inset-y-48 lds-ring"><div></div><div></div><div></div><div></div></div>
         <div v-else-if="sched != false && loading1 == false" class="max-w-[97vw] mx-auto grid grid-cols-4">
@@ -1585,74 +1612,67 @@ export default {
     components: { VueCal },
     setup () {
         const myChart = ref(null);
-        const totalClasses = ref(0);
-        const completeCount = ref(0);
-        const incompleteCount = ref(0);
-        const withoutCount = ref(0);
+        const myChartALL = ref(null);
+        const showChart = ref(false);
+        const totalCurr = ref(0);
+        const totalClasses = ref([0,0]);
+        const completeCount = ref([0,0]);
+        const incompleteCount = ref([0,0]);
+        const withoutCount = ref([0,0]);
+        const classLists = ref([]);
+        const completeList = ref([]);
+        const incompleteList = ref([]);
+        const withoutList = ref([]);
+        const classListsALL = ref([]);
+        const completeListALL = ref([]);
+        const incompleteListALL = ref([]);
+        const withoutListALL = ref([]);
 
-        const data = ref({
-            labels: [
-                'With Complete Saved Schedules',
-                'With Incomplete Saved Schedules',
-                'Without Saved Schedules'
-            ],
-            datasets: [{
-                label: 'No. of Classes',
-                data: [completeCount.value, incompleteCount.value, withoutCount.value],
-                backgroundColor: [
-                '#38bdf8',
-                '#253B80',
-                '#FB923C'
-                ],
-                hoverOffset: 4,
-                cutout: '70%',
-                radius: '90%'
-            }]
-        });
-        const config = ref({
-            type: 'doughnut',
-            data: data.value,
-            options: {
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#253B80',
-                        },
-                        onHover: handleHover,
-                        onLeave: handleLeave,
-                        onClick: newClickHandler
-                    },
-                    title: {
-                        display: true,
-                        color: '#253B80',
-                        text: 'TOTAL NO. OF CLASSES  [ '+totalClasses.value+' ]',
-                        font: {
-                            weight: '800',
-                            size: 13,
-                        },
-                    },
-                    subtitle: {
-                        display: true,
-                        text: 'Based on the Saved Curriculums by this user.',
-                        color: '#253B80',
-                        font: {
-                            style: 'italic',
-                        },
-                        padding: {
-                            top: -5,
-                            bottom: -10
-                        }
-                    }
-                }
-            }
-        });
+        const data = ref({});
+        const config = ref({});
+        const dataALL = ref({});
+        const configALL = ref({});
         const showClasses = ref(false);
+        const showClassesALL = ref(false);
+        const legendCollege = ref([]);
         const legendLabel = ref("");
+        const legendCount = ref(0);
 
         function newClickHandler(e, legendItem, legend) {
             legendLabel.value = legendItem.text;
-            showClasses.value = true;
+            legendCount.value = legend.chart.data.datasets[0].data[legendItem.index];
+            classLists.value = [];
+            switch (legendItem.text) {
+                case "With Complete Saved Schedules":
+                    classLists.value = classLists.value.concat(completeList.value);
+                    break;
+                case "With Incomplete Saved Schedules":
+                    classLists.value = classLists.value.concat(incompleteList.value);
+                    break;
+                case "Without Saved Schedules":
+                    classLists.value = classLists.value.concat(withoutList.value);
+                    break;
+            }
+            if(legend.chart.data.datasets[0].data[legendItem.index] != 0)
+                showClasses.value = true;
+        }
+        function newClickHandlerALL(e, legendItem, legend) {
+            legendLabel.value = legendItem.text;
+            legendCount.value = legend.chart.data.datasets[0].data[legendItem.index];
+            classListsALL.value = [];
+            switch (legendItem.text) {
+                case "With Complete Saved Schedules":
+                    classListsALL.value = classListsALL.value.concat(completeList.value);
+                    break;
+                case "With Incomplete Saved Schedules":
+                    classListsALL.value = classListsALL.value.concat(incompleteList.value);
+                    break;
+                case "Without Saved Schedules":
+                    classListsALL.value = classListsALL.value.concat(withoutList.value);
+                    break;
+            }
+            if(legend.chart.data.datasets[0].data[legendItem.index] != 0)
+                showClassesALL.value = true;
         }
 
         function handleHover(evt, item, legend) {
@@ -2122,14 +2142,22 @@ export default {
             collegeList.value = [];
             courseList.value = [];
             yearLevelList.value = [];
-            completeCount.value = 0;
-            incompleteCount.value = 0;
-            withoutCount.value = 0;
+            completeCount.value = [0,0];
+            incompleteCount.value = [0,0];
+            withoutCount.value = [0,0];
             block.value = 0;
             if(!h$.value.$invalid){
-                fetchColleges();
-                fetchTotalClasses();
-                myChart.value = new Chart(document.getElementById('myChart'), config.value);
+                loading2.value = true;
+                showChart.value = true;
+                fetchColleges(),
+                fetchTotalClasses().then(()=>{
+                    myChart.value = new Chart(document.getElementById('myChart'), config.value);
+                    document.getElementById("myChart").onclick = clickHandler;
+                    if(localStorage.getItem('userType') == 'reg'){
+                        myChartALL.value = new Chart(document.getElementById('myChartALL'), configALL.value);
+                        document.getElementById("myChartALL").onclick = clickHandlerALL;
+                    }
+                });
             }
         }
 
@@ -2290,6 +2318,7 @@ export default {
         const classscheduleID = ref(false);
         const loading = ref(false);
         const loading1 = ref(false);
+        const loading2 = ref(false);
         const model3 = ref({});
         const model3Edit = ref({});
 
@@ -2390,24 +2419,258 @@ export default {
         // const details = ref({...zxc});
 
         const fetchTotalClasses = async () => {
-            let totalC = await APIController.FetchCurriculaTotals(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID')); 
-            totalClasses.value = totalC[totalC.length-1].total;
-            for (let i = 0; i < totalC.length; i++) {
-                let statusC = await APIController.FetchCurriculaStatus(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, totalC[i].sched_id, totalC[i].course_id, totalC[i].yearLevel, localStorage.getItem('userID'));
-                var countStatS = 0;var countStatN = 0;var countStatI = 0;
-                for (let j = 0; j < statusC.length; j++) {
-                    if(statusC[j].status == "Complete")
-                        countStatS++;
-                    else if(statusC[j].status == "Not Saved")
-                        countStatN++;
+            if(localStorage.getItem('userType') == 'reg') {
+                legendCollege.value = await APIController.FetchCollege(localStorage.getItem('username'));
+                let totalCALL = await APIController.FetchCurriculaTotalsCollege(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('username'));
+                let totalCListALL = await APIController.FetchCurriculaTotalsListCollege(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('username'));
+            
+                if(totalCALL.length != 0) {
+                    totalClasses.value[0] = totalCALL[totalCALL.length-1].total;
+                    for (let i = 0; i < totalCALL.length; i++) {
+                        let statusC = await APIController.FetchCurriculaStatusCollege(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, totalCALL[i].sched_id, totalCALL[i].course_id, totalCALL[i].yearLevel);
+                        var countStatS = 0;var countStatN = 0;
+                        for (let j = 0; j < statusC.length; j++) {
+                            if(statusC[j].status == "Complete")
+                                countStatS++;
+                            else if(statusC[j].status == "Not Saved")
+                                countStatN++;
+                        }
+                        if(countStatS == statusC.length){
+                            completeCount.value[0] += 1;
+                            completeListALL.value.push({
+                                program_name: totalCALL[i].program_name,
+                                yearLevel: totalCALL[i].yearLevel,
+                                block: totalCALL[i].block,
+                                class_code: totalCALL[i].class_code
+                            });
+                        }
+                        else if(countStatN != statusC.length){
+                            incompleteCount.value[0] += 1;
+                            incompleteListALL.value.push({
+                                program_name: totalCALL[i].program_name,
+                                yearLevel: totalCALL[i].yearLevel,
+                                block: totalCALL[i].block,
+                                class_code: totalCALL[i].class_code
+                            });
+                        }
+                    }
+                    withoutListALL.value = withoutListALL.value.concat(totalCListALL);
+                    completeListALL.value.forEach(element => {
+                        withoutListALL.value = withoutListALL.value.filter(data => data.class_code != element.class_code);
+                    });
+                    incompleteListALL.value.forEach(element => {
+                        withoutListALL.value = withoutListALL.value.filter(data => data.class_code != element.class_code);
+                    });
+                    withoutCount.value[0] = totalClasses.value[0] - (completeCount.value[0] + incompleteCount.value[0]);
                 }
-                if(countStatS == statusC.length)
-                    completeCount.value += 1;
-                else if(countStatN != statusC.length)
-                    incompleteCount.value += 1;
+
+                dataALL.value = {
+                        labels: [
+                            'With Complete Saved Schedules',
+                            'With Incomplete Saved Schedules',
+                            'Without Saved Schedules'
+                        ],
+                        datasets: [{
+                            label: 'No. of Classes',
+                            data: [completeCount.value[0], incompleteCount.value[0], withoutCount.value[0]],
+                            backgroundColor: [
+                            '#38bdf8',
+                            '#253B80',
+                            '#FB923C'
+                            ],
+                            hoverOffset: 4,
+                            cutout: '70%',
+                            radius: '90%'
+                        }]
+                    };
+                configALL.value = {
+                        type: 'doughnut',
+                        data: dataALL.value,
+                        options: {
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: '#253B80',
+                                    },
+                                    onHover: handleHover,
+                                    onLeave: handleLeave,
+                                    onClick: newClickHandlerALL
+                                },
+                                title: {
+                                    display: true,
+                                    color: '#253B80',
+                                    text: 'TOTAL NO. OF CLASSES IN '+legendCollege.value.College_Code+'  [ '+totalClasses.value[0]+' ]',
+                                    font: {
+                                        weight: '800',
+                                        size: 13,
+                                    },
+                                },
+                                subtitle: {
+                                    display: false,
+                                    text: 'Based on the Saved Curriculums by this user.',
+                                    color: '#253B80',
+                                    font: {
+                                        style: 'italic',
+                                    },
+                                    padding: {
+                                        top: -5,
+                                        bottom: -10
+                                    }
+                                }
+                            }
+                        }
+                    };
             }
-            withoutCount.value = totalClasses.value - (completeCount.value + incompleteCount.value);
-            console.log(totalClasses.value);
+
+            let totalC = await APIController.FetchCurriculaTotals(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID'));
+            let totalCList = await APIController.FetchCurriculaTotalsList(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID')); 
+            
+            if(totalC.length != 0) {
+                totalClasses.value[1] = totalC[totalC.length-1].total;
+                totalCurr.value = totalC[totalC.length-1].curr;
+                for (let i = 0; i < totalC.length; i++) {
+                    let statusC = await APIController.FetchCurriculaStatus(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, totalC[i].sched_id, totalC[i].course_id, totalC[i].yearLevel, localStorage.getItem('userID'));
+                    var countStatS = 0;var countStatN = 0;
+                    for (let j = 0; j < statusC.length; j++) {
+                        if(statusC[j].status == "Complete")
+                            countStatS++;
+                        else if(statusC[j].status == "Not Saved")
+                            countStatN++;
+                    }
+                    if(countStatS == statusC.length){
+                        completeCount.value[1] += 1;
+                        completeList.value.push({
+                            program_name: totalC[i].program_name,
+                            yearLevel: totalC[i].yearLevel,
+                            block: totalC[i].block,
+                            class_code: totalC[i].class_code
+                        });
+                    }
+                    else if(countStatN != statusC.length){
+                        incompleteCount.value[1] += 1;
+                        incompleteList.value.push({
+                            program_name: totalC[i].program_name,
+                            yearLevel: totalC[i].yearLevel,
+                            block: totalC[i].block,
+                            class_code: totalC[i].class_code
+                        });
+                    }
+                }
+                withoutList.value = withoutList.value.concat(totalCList);
+                completeList.value.forEach(element => {
+                    withoutList.value = withoutList.value.filter(data => data.class_code != element.class_code);
+                });
+                incompleteList.value.forEach(element => {
+                    withoutList.value = withoutList.value.filter(data => data.class_code != element.class_code);
+                });
+                withoutCount.value[1] = totalClasses.value[1] - (completeCount.value[1] + incompleteCount.value[1]);
+            }
+            data.value = {
+                            labels: [
+                                'With Complete Saved Schedules',
+                                'With Incomplete Saved Schedules',
+                                'Without Saved Schedules'
+                            ],
+                            datasets: [{
+                                label: 'No. of Classes',
+                                data: [completeCount.value[1], incompleteCount.value[1], withoutCount.value[1]],
+                                backgroundColor: [
+                                '#38bdf8',
+                                '#253B80',
+                                '#FB923C'
+                                ],
+                                hoverOffset: 4,
+                                cutout: '70%',
+                                radius: '90%'
+                            }]
+                        };
+            config.value = {
+                                type: 'doughnut',
+                                data: data.value,
+                                options: {
+                                    plugins: {
+                                        legend: {
+                                            position: 'bottom',
+                                            labels: {
+                                                color: '#253B80',
+                                            },
+                                            onHover: handleHover,
+                                            onLeave: handleLeave,
+                                            onClick: newClickHandler
+                                        },
+                                        title: {
+                                            display: true,
+                                            color: '#253B80',
+                                            text: 'TOTAL NO. OF CLASSES  [ '+totalClasses.value[1]+' ]',
+                                            font: {
+                                                weight: '800',
+                                                size: 13,
+                                            },
+                                        },
+                                        subtitle: {
+                                            display: true,
+                                            text: 'Based on the Saved Curriculums [ '+totalCurr.value+' ]  by this user.',
+                                            color: '#253B80',
+                                            font: {
+                                                style: 'italic',
+                                            },
+                                            padding: {
+                                                top: -5,
+                                                bottom: -10
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+            loading2.value = false;
+        }
+
+        function clickHandler(evt){
+            var points = myChart.value.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length) {
+                var firstPoint = points[0];
+                var label = myChart.value.data.labels[firstPoint.index];
+                var value = myChart.value.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+                classLists.value = [];
+                switch (label) {
+                    case "With Complete Saved Schedules":
+                        classLists.value = classLists.value.concat(completeList.value);
+                        break;
+                    case "With Incomplete Saved Schedules":
+                        classLists.value = classLists.value.concat(incompleteList.value);
+                        break;
+                    case "Without Saved Schedules":
+                        classLists.value = classLists.value.concat(withoutList.value);
+                        break;
+                }
+                legendLabel.value = label;
+                legendCount.value = value;
+                showClasses.value = true;
+            }
+        }
+        function clickHandlerALL(evt){
+            var points = myChartALL.value.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length) {
+                var firstPoint = points[0];
+                var label = myChartALL.value.data.labels[firstPoint.index];
+                var value = myChartALL.value.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
+                classListsALL.value = [];
+                switch (label) {
+                    case "With Complete Saved Schedules":
+                        classListsALL.value = classListsALL.value.concat(completeListALL.value);
+                        break;
+                    case "With Incomplete Saved Schedules":
+                        classListsALL.value = classListsALL.value.concat(incompleteListALL.value);
+                        break;
+                    case "Without Saved Schedules":
+                        classListsALL.value = classListsALL.value.concat(withoutListALL.value);
+                        break;
+                }
+                legendLabel.value = label;
+                legendCount.value = value;
+                showClassesALL.value = true;
+            }
         }
 
         const fetchColleges = async () => {
@@ -2543,7 +2806,7 @@ export default {
 
         const AddSchedule = async () => {
             loading1.value = true;
-            userType.value = localStorage.getItem('userType');
+            // userType.value = localStorage.getItem('userType');
             tempSchedule = await APIController.CreateSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel, model.value.selectedBlock);
             if(tempSchedule){
                 schedule.value = tempSchedule.id;
@@ -3242,6 +3505,7 @@ export default {
 
         const GetCollege = async () => {
             college.value = await APIController.FetchCollege(localStorage.getItem('username'));
+            userType.value = localStorage.getItem('userType');
         }
 
         return {
@@ -3285,6 +3549,7 @@ export default {
             updateClassSchedule,
             loading,
             loading1,
+            loading2,
             cancel,
             deleteClassSchedule,
             fetchCurricula,
@@ -3422,48 +3687,46 @@ export default {
 
             data,
             config,
+            dataALL,
+            configALL,
             newClickHandler,
+            newClickHandlerALL,
             handleHover,
             handleLeave,
             showClasses,
+            showClassesALL,
             legendLabel,
+            legendCount,
             myChart,
+            myChartALL,
+            showChart,
             fetchTotalClasses,
+            totalCurr,
             totalClasses,
             completeCount,
             incompleteCount,
-            withoutCount
+            withoutCount,
+            classLists,
+            completeList,
+            incompleteList,
+            withoutList,
+            clickHandler,
+            classListsALL,
+            completeListALL,
+            incompleteListALL,
+            withoutListALL,
+            clickHandlerALL,
+            legendCollege
         }
     },
     mounted () {
-        
         if (this.classscheduleID != false){
             this.GetClassSchedule();
         }
         // this.GetClassSchedule();
         this.GetCollege();
-        
-        document.getElementById('myChart').onclick = this.clickHandler;
     },
     methods: {
-        clickHandler(evt) {
-            var points = this.myChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            if (points.length) {
-                const firstPoint = points[0];
-                const label = this.myChart.data.labels[firstPoint.index];
-                const value = this.myChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
-                
-                // if(label == "With Complete Saved Schedules"){
-                //     // fetch something
-                // } else if(label == "With Incomplete Saved Schedules") {
-
-                // } else {
-
-                // }
-                this.legendLabel = label;
-                this.showClasses =true;
-            }
-        },
         onChangeSubject(e){
             return e.target.value;
         },
@@ -3511,6 +3774,43 @@ export default {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+.lds-facebook {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-facebook div {
+  display: inline-block;
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  background: #253B80;
+  animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+}
+.lds-facebook div:nth-child(1) {
+  left: 8px;
+  animation-delay: -0.24s;
+}
+.lds-facebook div:nth-child(2) {
+  left: 32px;
+  animation-delay: -0.12s;
+}
+.lds-facebook div:nth-child(3) {
+  left: 56px;
+  animation-delay: 0;
+}
+@keyframes lds-facebook {
+  0% {
+    top: 8px;
+    height: 64px;
+  }
+  50%, 100% {
+    top: 24px;
+    height: 32px;
   }
 }
 

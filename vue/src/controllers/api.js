@@ -1461,6 +1461,22 @@ export default {
         });
     
     },
+    FetchCurriculaStatusCollege: (AY, sem, sched, id, yL) => {
+        
+        return fetch(API_BASE + "/curricula-status-college/" + AY + "/" + sem + "/" + sched + "/" + id + "/" + yL)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                return data.response.curriculaStatus;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err)
+        });
+    
+    },
     FetchSubjectsCurriculaYearLevel: (AY, sem, id, yL, user) => {
         
         return fetch(API_BASE + "/curriculayl-subjects/" + AY + "/" + sem + "/" + id + "/" + yL + "/" + user)
@@ -1554,6 +1570,51 @@ export default {
         .then(data => {
             if (data.success) {
                 return data.response.total;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err)
+        });
+    
+    },
+    FetchCurriculaTotalsList: (AY, sem, user) => {
+        return fetch(API_BASE + "/curricula-totals-list/" + AY + "/" + sem + "/" + user)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                return data.response.classes;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err)
+        });
+    
+    },
+    FetchCurriculaTotalsCollege: (AY, sem, username) => {
+        return fetch(API_BASE + "/curricula-college-totals/" + AY + "/" + sem + "/" + username)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                return data.response.total;
+            } else {
+                throw data.response.error;
+            }
+        })
+        .catch(err => {
+            alert(err)
+        });
+    
+    },
+    FetchCurriculaTotalsListCollege: (AY, sem, username) => {
+        return fetch(API_BASE + "/curricula-college-totals-list/" + AY + "/" + sem + "/" + username)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                return data.response.classes;
             } else {
                 throw data.response.error;
             }

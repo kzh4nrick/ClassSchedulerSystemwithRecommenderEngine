@@ -2291,6 +2291,89 @@ Route::get("/curricula-status-other/{AY}/{sem}/{sched}/{id}/{yL}/{user}", functi
     ];
 });
 
+// GET THE CURRICULA STATUS
+// BY COLLEGE ON CURRICULA
+Route::get("/curricula-status-college/{AY}/{sem}/{sched}/{id}/{yL}", function ($AY, $sem, $sched, $id, $yL) {
+    $curricula = DB::table('curricula')
+        ->join('subjects', 'curricula.subject_id', '=', 'subjects.id')
+        ->select('curricula.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type')
+        ->where('academicYear', $AY)
+        ->where('semester', $sem)
+        ->where('curricula.course_id', $id)
+        ->where('curricula.yearLevel', $yL)
+        ->get();
+
+    $new = json_decode($curricula, true);
+    foreach ($new as $key => $value){
+        $subjects[$key] = $value['subject_id'];
+        $lec[$key] = $value['lec'];
+        $lab[$key] = $value['lab'];
+        $minsCurr[$key] = ($lec[$key] * 60) + ($lab[$key] * 3 * 60);
+    }
+
+    $classschedules = DB::table('class_schedules')
+                    ->where('schedule_id', $sched)
+                    ->whereIn('subject_id', $subjects)
+                    ->get();
+
+    $cs = json_decode($classschedules, true);
+    foreach ($cs as $key => $value){
+        $subjectsCS[$key] = $value['subject_id'];
+        $time = strtotime($value['startTime']);
+        $minsS = (date('H', $time) * 60) + date('i', $time);
+        $time = strtotime($value['endTime']);
+        $minsE = (date('H', $time) * 60) + date('i', $time);
+        $minutes[$key] = $minsE - $minsS;
+    }
+    foreach ($subjects as $key => $value){
+        $mins[$key] = 0;
+        foreach($cs as $key2 => $value2){
+            if($value == $value2['subject_id']) {
+                $mins[$key] = $mins[$key] + $minutes[$key2];
+            }
+        }
+    }
+
+    $curriculaStatus = array();
+    foreach ($new as $key => $value){
+        if($minsCurr[$key] - $mins[$key] == 0)
+            $status = "Complete";
+        else if($minsCurr[$key] - $mins[$key] < 0)
+            $status = "Exceeded";
+        else if($minsCurr[$key] - $mins[$key] == $minsCurr[$key])
+            $status = "Not Saved";
+        else if($minsCurr[$key] - $mins[$key] < $minsCurr[$key])
+            $status = "Incomplete";
+
+        $curriculaStatus[$key] =  array(
+            "subject_id" => $value['subject_id'],
+            "Subject_Name" => $value['Subject_Name'],
+            "Subject_Code" => $value['Subject_Code'],
+            "lec" => $value['lec'],
+            "lab" => $value['lab'],
+            "mins" => $mins[$key],
+            "reqHrs" => $minsCurr[$key] / 60,
+            "status" => $status
+        );
+    }
+
+    if (empty($curriculaStatus)) {
+        return [
+            "success" => false,
+            "response" => [
+                "error" => "No records of Curricula found."
+            ]
+        ];
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "curriculaStatus" => $curriculaStatus
+        ]
+    ];
+});
+
 //GET A SINGLE CURRICULUM
 Route::get("/curriculum/{id}", function (Request $request, $id) {
     $curriculum = DB::table('curricula')
@@ -2393,13 +2476,14 @@ Route::get('/courses/college/{id}', function (Request $request, $id) {
 
 // GET TOTAL NO. OF CLASSES BY USER
 Route::get('/curricula-totals/{AY}/{sem}/{user}', function ($AY, $sem, $user) {
-    $curricula = DB::table('curricula')
-        ->where('curricula.academicYear', $AY)
-        ->where('curricula.semester', $sem)
-        ->where('curricula.user_id', $user)
-        ->select('curricula.course_id','curricula.yearLevel')
-        ->distinct()
-        ->get();
+        $curricula = DB::table('curricula')
+            ->join('courses', 'courses.id', '=', 'curricula.course_id')
+            ->where('curricula.academicYear', $AY)
+            ->where('curricula.semester', $sem)
+            ->where('curricula.user_id', $user)
+            ->select('curricula.course_id','courses.Course_Name','curricula.yearLevel','courses.Course_Code')
+            ->distinct()
+            ->get();
 
     $total = 0;
     $i = 0;
@@ -2410,15 +2494,19 @@ Route::get('/curricula-totals/{AY}/{sem}/{user}', function ($AY, $sem, $user) {
         switch ($c->yearLevel) {
             case 'First Year':
                 $yl = 'first';
+                $yL = 1;
                 break;
             case 'Second Year':
                 $yl = 'second';
+                $yL = 2;
                 break;
             case 'Third Year':
                 $yl = 'third';
+                $yL = 3;
                 break;
             case 'Fourth Year':
                 $yl = 'fourth';
+                $yL = 4;
                 break;
         }
         $blocks = DB::table('blocks')
@@ -2434,14 +2522,18 @@ Route::get('/curricula-totals/{AY}/{sem}/{user}', function ($AY, $sem, $user) {
             ->where('schedules.semester', $sem)
             ->where('schedules.course_id', $c->course_id)
             ->where('schedules.yearLevel', $c->yearLevel)
-            ->get(['schedules.id', 'schedules.course_id', 'schedules.yearLevel']);
+            ->get(['schedules.id', 'schedules.course_id', 'schedules.yearLevel', 'schedules.block']);
             
         foreach ($schedules as $key) {
             $scheds[$i] = array(
                 "sched_id" => $key->id,
                 "course_id" => $key->course_id,
                 "yearLevel" => $key->yearLevel,
-                "total" => $total
+                "program_name" => $c->Course_Name,
+                "block" => $key->block,
+                "class_code" => $c->Course_Code." ".$yL."-".$key->block,
+                "total" => $total,
+                "curr" => count($curricula)
             );
             $i++;
         }
@@ -2451,6 +2543,202 @@ Route::get('/curricula-totals/{AY}/{sem}/{user}', function ($AY, $sem, $user) {
         "success" => true,
         "response" => [
             "total" => $scheds
+        ]
+    ];
+});
+
+// GET THE TOTAL LISTS OF CLASSES BY USER
+Route::get('/curricula-totals-list/{AY}/{sem}/{user}', function ($AY, $sem, $user) {
+    $curricula = DB::table('curricula')
+        ->join('courses', 'courses.id', '=', 'curricula.course_id')
+        ->where('curricula.academicYear', $AY)
+        ->where('curricula.semester', $sem)
+        ->where('curricula.user_id', $user)
+        ->select('curricula.course_id','courses.Course_Name','curricula.yearLevel','courses.Course_Code')
+        ->distinct()
+        ->get(['curricula.course_id', 'curricula.yearLevel']);
+
+    $j = 0;
+    $class = array();
+    $b = ['A', 'B', 'C', 'D'];
+
+    foreach($curricula as $c){
+        $yl = "";
+        switch ($c->yearLevel) {
+            case 'First Year':
+                $yl = 'first';
+                $yL = 1;
+                break;
+            case 'Second Year':
+                $yl = 'second';
+                $yL = 2;
+                break;
+            case 'Third Year':
+                $yl = 'third';
+                $yL = 3;
+                break;
+            case 'Fourth Year':
+                $yl = 'fourth';
+                $yL = 4;
+                break;
+        }
+        $blocks = DB::table('blocks')
+            ->where('blocks.academicYear', $AY)
+            ->where('blocks.semester', $sem)
+            ->where('blocks.course_id', $c->course_id)
+            ->value('blocks.'.$yl);
+            
+        for ($i=0; $i < $blocks; $i++) { 
+            $class[$j] = array(
+                "program_name" => $c->Course_Name,
+                "yearLevel" => $c->yearLevel,
+                "block" => $b[$i],
+                "class_code" => $c->Course_Code." ".$yL."-".$b[$i]
+            );
+            $j++;
+        }
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "classes" => $class
+        ]
+    ];
+});
+
+// GET TOTAL NO. OF CLASSES BY COLLEGE
+Route::get('/curricula-college-totals/{AY}/{sem}/{username}', function ($AY, $sem, $username) {
+    $curricula = DB::table('curricula')
+        ->join('courses', 'courses.id', '=', 'curricula.course_id')
+        ->join('users', 'users.id', '=', 'curricula.user_id')
+        ->join('colleges', 'colleges.username', '=', 'users.username')
+        ->where('curricula.academicYear', $AY)
+        ->where('curricula.semester', $sem)
+        ->where('colleges.username', $username)
+        ->select('curricula.course_id','courses.Course_Name','curricula.yearLevel','courses.Course_Code')
+        ->distinct()
+        ->get();
+
+$total = 0;
+$i = 0;
+$scheds = array();
+
+foreach($curricula as $c){
+    $yl = "";
+    switch ($c->yearLevel) {
+        case 'First Year':
+            $yl = 'first';
+            $yL = 1;
+            break;
+        case 'Second Year':
+            $yl = 'second';
+            $yL = 2;
+            break;
+        case 'Third Year':
+            $yl = 'third';
+            $yL = 3;
+            break;
+        case 'Fourth Year':
+            $yl = 'fourth';
+            $yL = 4;
+            break;
+    }
+    $blocks = DB::table('blocks')
+        ->where('blocks.academicYear', $AY)
+        ->where('blocks.semester', $sem)
+        ->where('blocks.course_id', $c->course_id)
+        ->value('blocks.'.$yl);
+
+    $total = $total + $blocks;
+
+    $schedules = DB::table('schedules')
+        ->where('schedules.academicYear', $AY)
+        ->where('schedules.semester', $sem)
+        ->where('schedules.course_id', $c->course_id)
+        ->where('schedules.yearLevel', $c->yearLevel)
+        ->get(['schedules.id', 'schedules.course_id', 'schedules.yearLevel', 'schedules.block']);
+        
+    foreach ($schedules as $key) {
+        $scheds[$i] = array(
+            "sched_id" => $key->id,
+            "course_id" => $key->course_id,
+            "yearLevel" => $key->yearLevel,
+            "program_name" => $c->Course_Name,
+            "block" => $key->block,
+            "class_code" => $c->Course_Code." ".$yL."-".$key->block,
+            "total" => $total
+        );
+        $i++;
+    }
+}
+
+return [
+    "success" => true,
+    "response" => [
+        "total" => $scheds
+    ]
+];
+});
+
+// GET THE TOTAL LISTS OF CLASSES BY COLLEGE
+Route::get('/curricula-college-totals-list/{AY}/{sem}/{username}', function ($AY, $sem, $username) {
+    $curricula = DB::table('curricula')
+        ->join('courses', 'courses.id', '=', 'curricula.course_id')
+        ->join('users', 'users.id', '=', 'curricula.user_id')
+        ->join('colleges', 'colleges.username', '=', 'users.username')
+        ->where('curricula.academicYear', $AY)
+        ->where('curricula.semester', $sem)
+        ->where('colleges.username', $username)
+        ->select('curricula.course_id','courses.Course_Name','curricula.yearLevel','courses.Course_Code')
+        ->distinct()
+        ->get(['curricula.course_id', 'curricula.yearLevel']);
+
+    $j = 0;
+    $class = array();
+    $b = ['A', 'B', 'C', 'D'];
+
+    foreach($curricula as $c){
+        $yl = "";
+        switch ($c->yearLevel) {
+            case 'First Year':
+                $yl = 'first';
+                $yL = 1;
+                break;
+            case 'Second Year':
+                $yl = 'second';
+                $yL = 2;
+                break;
+            case 'Third Year':
+                $yl = 'third';
+                $yL = 3;
+                break;
+            case 'Fourth Year':
+                $yl = 'fourth';
+                $yL = 4;
+                break;
+        }
+        $blocks = DB::table('blocks')
+            ->where('blocks.academicYear', $AY)
+            ->where('blocks.semester', $sem)
+            ->where('blocks.course_id', $c->course_id)
+            ->value('blocks.'.$yl);
+            
+        for ($i=0; $i < $blocks; $i++) { 
+            $class[$j] = array(
+                "program_name" => $c->Course_Name,
+                "yearLevel" => $c->yearLevel,
+                "block" => $b[$i],
+                "class_code" => $c->Course_Code." ".$yL."-".$b[$i]
+            );
+            $j++;
+        }
+    }
+
+    return [
+        "success" => true,
+        "response" => [
+            "classes" => $class
         ]
     ];
 });
