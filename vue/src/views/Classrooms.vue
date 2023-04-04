@@ -3,7 +3,7 @@
         <div
             class="max-w-screen mx-auto py-3 text-center"
         >
-            <h1 class="w-full lg:text-xl md:text-lg text-center uppercase lg:font-extrabold md:font-bold text-[#253B80]">
+            <h1 class="w-full text-xl text-center uppercase font-raleway tracking-wider text-[#253B80]">
                 UPDATE & MANAGING OF CLASSROOMS ON {{ college.College_Name }}
             </h1>
         </div>

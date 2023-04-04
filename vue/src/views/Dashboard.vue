@@ -11,7 +11,7 @@
 
     <header class="bg-white shadow">
         <div class="flex items-center flex-row py-2">
-            <h1 class="w-3/5 lg:text-xl md:text-lg text-right uppercase lg:font-extrabold md:font-bold text-[#253B80]">
+            <h1 class="w-3/5 lg2:text-xl md:text-lg tracking-wider text-right uppercase font-raleway text-[#253B80]">
                 Class Scheduler System with Recommender Engine
             </h1>
             <div class="flex justify-center w-2/5">
@@ -34,7 +34,7 @@
         </div>
     </header>
     <main>
-        <div class="max-w-[90vw] mx-auto py-2.5">
+        <div class="xl2:max-w-[90vw] lg:max-w-[95vw] mx-auto py-2.5">
             <form class="form" @submit.prevent="AddSchedule()">
             <div class="grid grid-cols-12 gap-2">
                 <div class="col-span-4">
@@ -44,7 +44,7 @@
                         @keyup="v$.selectedCollege.$touch()"
                         @blur="v$.selectedCollege.$touch()"
                         required
-                        @change="fetchCourses(), viewsched1 = true, sched = false"
+                        @change="fetchCourses(), showChart = false, model.selectedCourse = '', model.selectedYearLevel = '', model.selectedBlock = '', viewsched1 = true, sched = false"
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
                         <option disabled value="" class="text-center">-- Select a College Department --</option>
@@ -70,7 +70,7 @@
                         v-model="v$.selectedCourse.$model"
                         @keyup="v$.selectedCourse.$touch()"
                         @blur="v$.selectedCourse.$touch()"
-                        @change="fetchYearLevel(), viewsched2 = true, sched = false"
+                        @change="fetchYearLevel(), showChart = false, model.selectedYearLevel = '', model.selectedBlock = '', viewsched2 = true, sched = false"
                         required
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
@@ -97,17 +97,17 @@
                         v-model="v$.selectedYearLevel.$model"
                         @keyup="v$.selectedYearLevel.$touch()"
                         @blur="v$.selectedYearLevel.$touch()"
-                        @change="fetchBlock(onChangeYearLevel($event)), viewsched3 = true, sched = false"
+                        @change="fetchBlock(onChangeYearLevel($event)), showChart = false, model.selectedBlock = '', viewsched3 = true, sched = false"
                         required
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
                         <option disabled value="" class="text-center">-Year Level-</option>
                         <option v-for="list in yearLevelList"
-                                :key="list.yearLevel"
-                                :value="list.yearLevel"
+                                :key="list"
+                                :value="list"
                                 class="text-sky-600 text-justify"
                                 >
-                                {{  list.yearLevel }}
+                                {{  list }}
                         </option>
                     </select>
                     <select
@@ -124,7 +124,7 @@
                         v-model="v$.selectedBlock.$model"
                         @keyup="v$.selectedBlock.$touch()"
                         @blur="v$.selectedBlock.$touch()"
-                        @change="viewsched4 = true, sched = false"
+                        @change="showChart = false, viewsched4 = true, sched = false"
                         required
                         class="invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-sky-600 border-2 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                     >
@@ -169,7 +169,7 @@
             </form>
         </div>
 
-        <div v-if="sched == false && loading1 == false" class="max-w-[90vw] mx-auto my-[3vh] grid grid-cols-6 gap-x-5">
+        <div v-if="sched == false && loading1 == false" class="xl2:max-w-[90vw] lg:max-w-[95vw] mx-auto my-[3vh] grid grid-cols-6 gap-x-5">
             <div v-if="userType == 'reg'" class="col-span-3 border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
                 <div v-if="loading2" class="top-1/3 lds-facebook"><div></div><div></div><div></div></div>
                 <canvas v-else-if="showChart" id="myChartALL"></canvas>
@@ -191,7 +191,7 @@
                                 </div>
                             </div>
                             <div class="mb-1 flex items-center justify-center border-t border-solid border-slate-200 rounded-b">
-                                <button class="mt-1 text-[#253B80] bg-transparent border border-solid border-[#253B80] hover:bg-[#253B80] hover:text-white active:bg-[#253B80] font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="showClasses = false">
+                                <button class="mt-1 text-[#253B80] bg-transparent border border-solid border-[#253B80] hover:bg-[#253B80] hover:text-white active:bg-[#253B80] font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="showClassesALL = false">
                                 Close
                                 </button>
                             </div>
@@ -200,7 +200,7 @@
                 </div>
                 <div v-if="showClassesALL" class="opacity-25 fixed inset-0 z-40 bg-slate-400"></div>
             </div>
-            <div :class="userType == 'dept' ? 'col-span-6':'col-span-3'" class="border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
+            <div v-if="userType != null" :class="userType == 'dept' ? 'col-span-6':'col-span-3'" class="border border-sky-400/[15%] flex justify-center shadow-xl shadow-sky-400/[15%] rounded-md h-[70vh]">
                 <div v-if="loading2" class="top-1/3 lds-facebook"><div></div><div></div><div></div></div>
                 <canvas v-else-if="showChart" id="myChart"></canvas>
                 <div v-if="showClasses" class="fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
@@ -1430,7 +1430,7 @@
                                 </div>
                                 <div class="col-span-2 flex items-center justify-center border-l border-r gap-x-1.5">
                                     <div v-for="(items, indexx) in preferredDays">
-                                        <input type="checkbox" :value="indexx" v-model="item.prefDays" :disabled="(item.prefDays.length >= 3 && item.prefDays.indexOf(indexx) == -1)"
+                                        <input type="checkbox" :value="indexx" v-model="item.prefDays" :disabled="(item.prefDays.length >= 5 && item.prefDays.indexOf(indexx) == -1)"
                                                 class="cursor-pointer border-2 border-orange-500 checked:bg-sky-500 focus:ring-sky-500 focus:ring-1 focus:ring-offset-1 focus:checked:bg-sky-500 rounded-sm">
                                         <label for="preferred_days" class="ml-px text-sm font-medium text-gray-700">{{ items }}</label>
                                     </div>
@@ -1606,6 +1606,7 @@ import VueCal from 'vue-cal'
 import 'vue-cal/dist/vuecal.css'
 import { reactive } from '@vue/reactivity';
 import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 export default {
     name: 'Class Scheduler',
@@ -2142,11 +2143,20 @@ export default {
             collegeList.value = [];
             courseList.value = [];
             yearLevelList.value = [];
+            completeList.value = [];
+            incompleteList.value = [];
+            withoutList.value = [];
+            completeListALL.value = [];
+            incompleteListALL.value = [];
+            withoutListALL.value = [];
+            totalClasses.value = [0,0];
+            totalCurr.value = 0;
             completeCount.value = [0,0];
             incompleteCount.value = [0,0];
             withoutCount.value = [0,0];
             block.value = 0;
             if(!h$.value.$invalid){
+                userType.value = localStorage.getItem('userType');
                 loading2.value = true;
                 showChart.value = true;
                 fetchColleges(),
@@ -2159,13 +2169,6 @@ export default {
                     }
                 });
             }
-        }
-
-        const initialState = {
-            selectedCollege: '',
-            selectedCourse: '',
-            selectedYearLevel: '',
-            selectedBlock: '',
         }
 
         const collegeList = ref([]);
@@ -2219,6 +2222,12 @@ export default {
             hourslab: 0,
         });
 
+        const initialState = {
+            selectedCollege: '',
+            selectedCourse: '',
+            selectedYearLevel: '',
+            selectedBlock: '',
+        }
         const model = ref({...initialState});
 
         const rules = computed(() => {
@@ -2425,7 +2434,7 @@ export default {
                 let totalCListALL = await APIController.FetchCurriculaTotalsListCollege(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('username'));
             
                 if(totalCALL.length != 0) {
-                    totalClasses.value[0] = totalCALL[totalCALL.length-1].total;
+                    totalClasses.value[0] = totalCListALL.length;
                     for (let i = 0; i < totalCALL.length; i++) {
                         let statusC = await APIController.FetchCurriculaStatusCollege(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, totalCALL[i].sched_id, totalCALL[i].course_id, totalCALL[i].yearLevel);
                         var countStatS = 0;var countStatN = 0;
@@ -2466,21 +2475,21 @@ export default {
 
                 dataALL.value = {
                         labels: [
-                            'With Complete Saved Schedules',
                             'With Incomplete Saved Schedules',
-                            'Without Saved Schedules'
+                            'Without Saved Schedules',
+                            'With Complete Saved Schedules'
                         ],
                         datasets: [{
                             label: 'No. of Classes',
-                            data: [completeCount.value[0], incompleteCount.value[0], withoutCount.value[0]],
-                            backgroundColor: [
-                            '#38bdf8',
-                            '#253B80',
-                            '#FB923C'
+                            data: [incompleteCount.value[0], withoutCount.value[0], completeCount.value[0]],
+                            backgroundColor: [//'#78D1F7','#FAA662','#3453B3'
+                                '#38bdf8',
+                                '#FB923C',
+                                '#253B80'
                             ],
                             hoverOffset: 4,
-                            cutout: '70%',
-                            radius: '90%'
+                            cutout: '40%',
+                            radius: '100%'
                         }]
                     };
                 configALL.value = {
@@ -2503,8 +2512,14 @@ export default {
                                     text: 'TOTAL NO. OF CLASSES IN '+legendCollege.value.College_Code+'  [ '+totalClasses.value[0]+' ]',
                                     font: {
                                         weight: '800',
-                                        size: 13,
+                                        size: 14,
                                     },
+                                },
+                                tooltip: {
+                                    position: 'nearest',
+                                    bodyFont: {
+                                        weight: '600'
+                                    }
                                 },
                                 subtitle: {
                                     display: false,
@@ -2517,9 +2532,31 @@ export default {
                                         top: -5,
                                         bottom: -10
                                     }
+                                },
+                                datalabels: {
+                                    formatter: (value, context) => {
+                                        const datapoints = context.chart.data.datasets[0].data;
+                                        function totalSum(total, datapoint){
+                                            return total + datapoint;
+                                        }
+                                        const totalValue = datapoints.reduce(totalSum, 0);
+                                        var percentageValue = (value / totalValue * 100).toFixed(1);
+                                        if(percentageValue - Math.floor(percentageValue) == 0)
+                                            percentageValue = Math.trunc(percentageValue);
+                                        var display = [`${percentageValue}%`];
+                                        if(percentageValue == 0)
+                                            display = "";
+                                        return display;
+                                    },
+                                    color: 'white',
+                                    font: {
+                                        weight: '800',
+                                        size: 14
+                                    }
                                 }
                             }
-                        }
+                        },
+                        plugins: [ChartDataLabels]
                     };
             }
 
@@ -2527,7 +2564,7 @@ export default {
             let totalCList = await APIController.FetchCurriculaTotalsList(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, localStorage.getItem('userID')); 
             
             if(totalC.length != 0) {
-                totalClasses.value[1] = totalC[totalC.length-1].total;
+                totalClasses.value[1] = totalCList.length;
                 totalCurr.value = totalC[totalC.length-1].curr;
                 for (let i = 0; i < totalC.length; i++) {
                     let statusC = await APIController.FetchCurriculaStatus(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, totalC[i].sched_id, totalC[i].course_id, totalC[i].yearLevel, localStorage.getItem('userID'));
@@ -2568,20 +2605,20 @@ export default {
             }
             data.value = {
                             labels: [
-                                'With Complete Saved Schedules',
                                 'With Incomplete Saved Schedules',
-                                'Without Saved Schedules'
+                                'Without Saved Schedules',
+                                'With Complete Saved Schedules'
                             ],
                             datasets: [{
                                 label: 'No. of Classes',
-                                data: [completeCount.value[1], incompleteCount.value[1], withoutCount.value[1]],
+                                data: [incompleteCount.value[1], withoutCount.value[1], completeCount.value[1]],
                                 backgroundColor: [
                                 '#38bdf8',
-                                '#253B80',
-                                '#FB923C'
+                                '#FB923C',
+                                '#253B80'
                                 ],
                                 hoverOffset: 4,
-                                cutout: '70%',
+                                cutout: '60%',
                                 radius: '90%'
                             }]
                         };
@@ -2608,6 +2645,12 @@ export default {
                                                 size: 13,
                                             },
                                         },
+                                        tooltip: {
+                                            position: 'nearest',
+                                            bodyFont: {
+                                                weight: '600'
+                                            }
+                                        },
                                         subtitle: {
                                             display: true,
                                             text: 'Based on the Saved Curriculums [ '+totalCurr.value+' ]  by this user.',
@@ -2619,9 +2662,31 @@ export default {
                                                 top: -5,
                                                 bottom: -10
                                             }
+                                        },
+                                        datalabels: {
+                                            formatter: (value, context) => {
+                                                const datapoints = context.chart.data.datasets[0].data;
+                                                function totalSum(total, datapoint){
+                                                    return total + datapoint;
+                                                }
+                                                const totalValue = datapoints.reduce(totalSum, 0);
+                                                var percentageValue = (value / totalValue * 100).toFixed(1);
+                                                if(percentageValue - Math.floor(percentageValue) == 0)
+                                                    percentageValue = Math.trunc(percentageValue);
+                                                var display = [`${percentageValue}%`];
+                                                if(percentageValue == 0)
+                                                    display = "";
+                                                return display;
+                                            },
+                                            color: 'white',
+                                            font: {
+                                                weight: '800',
+                                                size: 13
+                                            }
                                         }
                                     }
-                                }
+                                },
+                                plugins: [ChartDataLabels]
                             };
             loading2.value = false;
         }
@@ -2805,6 +2870,7 @@ export default {
         // }
 
         const AddSchedule = async () => {
+            showChart.value = true;
             loading1.value = true;
             // userType.value = localStorage.getItem('userType');
             tempSchedule = await APIController.CreateSchedule(modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, model.value.selectedCourse, model.value.selectedYearLevel, model.value.selectedBlock);
@@ -3151,13 +3217,6 @@ export default {
 
             classscheduleList.value = await APIController.FetchClassSchedules(schedule.value);
 
-            let temp = '';
-            for (let i = 0; i < Object.keys(classscheduleList.value).length; i++) {
-                if(temp != classscheduleList.value[i].Subject_Name){
-                    temp = classscheduleList.value[i].Subject_Name;
-                }
-            }
-
             events.value = classscheduleList.value.map(function (element){
                 let properties = {};
                 if(element.user_id == localStorage.getItem('userID')){
@@ -3185,15 +3244,6 @@ export default {
                 }
                 return properties;
             });
-
-            for (let z = 0; z < Object.keys(events.value).length; z++) {
-                var startttMm = new Date(events.value[z].start.split(' '));
-                startttMm = (startttMm.getHours() * 60) + startttMm.getMinutes();
-                var endddMm = new Date(events.value[z].end.split(' '));
-                endddMm = (endddMm.getHours() * 60) + endddMm.getMinutes();
-                var tt = (endddMm - startttMm) / 60;
-
-            }
 
             for (let q = 0; q < days.value.length; q++) {
                 events.value.push({
@@ -3505,7 +3555,6 @@ export default {
 
         const GetCollege = async () => {
             college.value = await APIController.FetchCollege(localStorage.getItem('username'));
-            userType.value = localStorage.getItem('userType');
         }
 
         return {
@@ -3719,14 +3768,10 @@ export default {
             legendCollege
         }
     },
-    mounted () {
-        if (this.classscheduleID != false){
-            this.GetClassSchedule();
-        }
-        // this.GetClassSchedule();
-        this.GetCollege();
-    },
     methods: {
+        getUserType(){
+            this.userType = localStorage.getItem('userType');
+        },
         onChangeSubject(e){
             return e.target.value;
         },
@@ -3736,6 +3781,14 @@ export default {
         onChangeYearLevel(e){
             return e.target.value;
         },
+    },
+    mounted() {
+        if (this.classscheduleID != false){
+            this.GetClassSchedule();
+        }
+        // this.GetClassSchedule();
+        this.GetCollege();
+        this.getUserType();
     }
 }
 </script>

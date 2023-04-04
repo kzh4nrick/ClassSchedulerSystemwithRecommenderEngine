@@ -10,27 +10,26 @@
   -->
   <div class="min-h-full">
     <Disclosure as="nav" class="bg-[#253B80]" v-slot="{ open }">
-      <div class="max-w-screen 2xl:mx-20 xl:mx-8 lg:mx-4">
+      <div class="xl2:max-w-[90vw] lg:max-w-[95vw] mx-auto">
         <div class="flex items-center justify-between h-14">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <a href="https://bicol-u.edu.ph" target="_blank">
-                <img class="h-8 w-30" src="/src/assets/bu-logo-2.png" alt="Bicol University" />
+                <img class="h-10 w-30" src="/src/assets/bu-logo-2.png" alt="Bicol University" />
               </a>
             </div>
             <div class="ml-4 hidden lg2:block">
-              <div class="flex space-x-1 items-baseline font-roboto">
+              <div class="flex space-x-1 items-baseline whitespace-nowrap font-roboto">
                 <router-link v-for="item in navigation" :key="item.name" :to="item.to" active-class="bg-[#1C2D60] text-white" :class="[this.$route.name === item.to.name ? '' : 'text-white hover:bg-[#213470] hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-white', 'px-2 py-2.5 rounded-md text-sm']" >{{ item.name }}</router-link>
               </div>
             </div>
           </div>
           <div class="hidden lg2:block">
-            <div class="ml-4 flex items-right">
-
+            <div class="w-auto flex items-right">
               <!-- Profile dropdown -->
-              <Menu as="div" class="ml-3 relative">
+              <Menu as="div" class="relative">
                 <div>
-                  <MenuButton class="w-40 bg-[#1C2D60] hover:bg-[#213470] rounded-lg flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3453B3] focus:ring-white">
+                  <MenuButton class="pl-2 pr-2.5 py-1.5 bg-[#1C2D60] hover:bg-[#213470] rounded-lg flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3453B3] focus:ring-white">
                     <span class="sr-only">Open user menu</span>
 
                     <!-- <div class="mx-3">
@@ -41,11 +40,11 @@
                       </div>
                     </div> -->
 
-                    <div class="flex items-center pl-1.5 py-1">
+                    <div class="flex items-center">
                       <div class="flex-shrink-0">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          class="h-8 w-8"
+                          class="h-[4vh] w-[2vw]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="white"
@@ -58,8 +57,8 @@
                           />
                         </svg>
                       </div>
-                      <div class="ml-1 font-roboto leading-none">
-                        <div :class="(userType == 'dept') ? 'text-xs' : 'text-base'" class="text-base text-white">
+                      <div class="ml-1 font-roboto whitespace-nowrap -space-y-1 leading-none">
+                        <div class="text-sm text-white">
                           {{ user.name }}
                         </div>
                         <div class="text-xs text-gray-400">
@@ -203,7 +202,6 @@ export default {
 
     const userType = ref('');
     
-
     localStorage.setItem('username', user.value.username);
 
     const GetCollege = async () => {
