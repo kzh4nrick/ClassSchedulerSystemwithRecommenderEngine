@@ -239,7 +239,7 @@
             <!-- :time-step="5"
                 timeCellHeight=20 -->
             <div v-if="(viewSchedule == 'class' && viewSchedule != 'faculty' && viewSchedule != 'classroom')" class="col-span-3 rounded-lg shadow-lg">
-                <vue-cal class="rounded-lg"
+                <vue-cal class="rounded-xl"
                     selected-date="2022-08-01"
                     :time-from="7 * 60"
                     :time-to="21 * 60"
@@ -638,11 +638,11 @@
             <div class="ml-2 mt-1.5 h-min overflow-x-auto h-auto max-h-[76vh] grid grid-cols-4">
                 <div class="mt-1 col-span-4 flex justify-end w-10/12 gap-x-2.5">
                     <button v-if="(curriculumListNotSave.length > 0)" @click="toggleModal()"
-                        class="h-auto py-1.5 w-3/5 outline outline-offset-2 outline-1 outline-sky-400 hover:outline-sky-600 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
+                        class="h-auto py-1.5 w-[70%] outline outline-offset-2 outline-1 outline-sky-400 hover:outline-sky-600 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
                         Generate Schedules
                     </button>
                     <button v-else disabled
-                        class="cursor-not-allowed h-auto py-1.5 w-3/5 outline outline-offset-2 outline-1 outline-sky-400 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
+                        class="cursor-not-allowed h-auto py-1.5 w-[70%] outline outline-offset-2 outline-1 outline-sky-400 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
                         Generate Schedules
                     </button>
                     <button v-if="(classscheduleList.length > 0)" @click="toggleModalDeleteSchedules()"
@@ -1205,31 +1205,31 @@
 
                 <div class="col-span-4 flex justify-center mt-4">
                     <button v-if="(subjectList.length > 0)" @click="reset(), toggleModalAdd()"
-                        class="h-auto py-1.5 w-3/5 outline outline-offset-2 outline-1 outline-sky-400 hover:outline-sky-600 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
+                        class="h-auto py-1.5 w-[70%] outline outline-offset-2 outline-1 outline-sky-400 hover:outline-sky-600 text-sm font-bold uppercase rounded-lg text-white bg-sky-400 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400">
                         Add Schedule
                     </button>
                     <button v-else disabled
-                        class="cursor-not-allowed h-auto py-1.5 w-3/5 outline outline-offset-2 outline-1 outline-sky-400 text-sm font-bold uppercase rounded-lg text-white bg-sky-400">
+                        class="cursor-not-allowed h-auto py-1.5 w-[70%] outline outline-offset-2 outline-1 outline-sky-400 text-sm font-bold uppercase rounded-lg text-white bg-sky-400">
                         Add Schedule
                     </button>
                 </div>
 
                 <div class="col-span-4 flex justify-center mt-4">
                     <button @click="toggleModalFaculty(), fetchFacultiesReports(), viewSchedule = 'faculty'"
-                        class="h-auto py-1.5 w-4/6 outline outline-offset-2 outline-1 outline-cyan-400 hover:outline-cyan-600 text-sm font-bold uppercase rounded-lg text-white bg-cyan-400 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400">
+                        class="h-auto py-1.5 w-[80%] outline outline-offset-2 outline-1 outline-cyan-400 hover:outline-cyan-600 text-sm font-bold uppercase rounded-lg text-white bg-cyan-400 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400">
                         View Faculty Schedule
                     </button>
                 </div>
                 <div class="col-span-4 flex justify-center mt-4">
                     <button @click="toggleModalClassroom(), fetchClassroomsCollegeReports(), viewSchedule = 'classroom'"
-                        class="h-auto py-1.5 w-4/6 outline outline-offset-2 outline-1 outline-cyan-400 hover:outline-cyan-600 text-sm font-bold uppercase rounded-lg text-white bg-cyan-400 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400">
+                        class="h-auto py-1.5 w-[80%] outline outline-offset-2 outline-1 outline-cyan-400 hover:outline-cyan-600 text-sm font-bold uppercase rounded-lg text-white bg-cyan-400 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400">
                         View Classroom Schedule
                     </button>
                 </div>
 
                 <div class="mb-1 col-span-4 flex justify-center mt-4">
                     <button v-if="classscheduleList.length > 0 && userType == 'dept'" @click="toggleModalPrintClass()"
-                        class="h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] hover:outline-[#253B80] text-sm hover:text-slate-300 font-bold uppercase rounded-lg text-white bg-[#253B80] hover:bg-[#2C4899] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C4899]">
+                        class="h-auto py-1.5 w-[80%] flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] hover:outline-[#253B80] text-sm hover:text-slate-300 font-bold uppercase rounded-lg text-white bg-[#253B80] hover:bg-[#2C4899] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C4899]">
                         Print This Class Schedule
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                             <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -1237,7 +1237,7 @@
                         </svg>
                     </button>
                     <button v-else-if="classscheduleList.length > 0 && userType == 'reg'" @click="fetchSchedulesCollege(); toggleModalClassScheduleREG()"
-                        class="h-auto py-1.5 w-8/12 flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] hover:outline-[#253B80] text-sm hover:text-slate-300 font-bold uppercase rounded-lg text-white bg-[#253B80] hover:bg-[#2C4899] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C4899]">
+                        class="h-auto py-1.5 w-[80%] flex items-center justify-center outline outline-offset-2 outline-1 outline-[#2C4899] hover:outline-[#253B80] text-sm hover:text-slate-300 font-bold uppercase rounded-lg text-white bg-[#253B80] hover:bg-[#2C4899] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2C4899]">
                         View Class Schedules
                         <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down ml-1.5" viewBox="0 0 16 16">
                             <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
@@ -1663,13 +1663,13 @@ export default {
             classListsALL.value = [];
             switch (legendItem.text) {
                 case "With Complete Saved Schedules":
-                    classListsALL.value = classListsALL.value.concat(completeList.value);
+                    classListsALL.value = classListsALL.value.concat(completeListALL.value);
                     break;
                 case "With Incomplete Saved Schedules":
-                    classListsALL.value = classListsALL.value.concat(incompleteList.value);
+                    classListsALL.value = classListsALL.value.concat(incompleteListALL.value);
                     break;
                 case "Without Saved Schedules":
-                    classListsALL.value = classListsALL.value.concat(withoutList.value);
+                    classListsALL.value = classListsALL.value.concat(withoutListALL.value);
                     break;
             }
             if(legend.chart.data.datasets[0].data[legendItem.index] != 0)
