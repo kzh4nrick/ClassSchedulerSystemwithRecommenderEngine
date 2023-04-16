@@ -5075,15 +5075,10 @@ Route::get("/classschedules/faculty/{id}/{AY}/{sem}", function (Request $request
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
                         ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
                         ->join('courses', 'schedules.course_id', '=', 'courses.id')
-                        ->join('curricula', function ($join) use ($AY, $sem){
-                            $join->on('subjects.id', '=', 'curricula.subject_id')
-                            ->where('curricula.academicYear', $AY)
-                            ->where('curricula.semester', $sem);
-                        })
                         ->where('schedules.academicYear', $AY)
                         ->where('schedules.semester', $sem)
                         ->where('faculties.id', '=', $id)
-                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'curricula.lec', 'curricula.lab')
+                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.academicYear', 'schedules.semester', 'schedules.yearLevel', 'schedules.block')
                         ->get();
 
     foreach($classschedules as $cs)
@@ -5125,6 +5120,18 @@ Route::get("/classschedules/faculty/{id}/{AY}/{sem}", function (Request $request
                 $cs->dayy = "Sunday";
                 break;
         }
+        $lec = DB::table('curricula')
+                ->where('academicYear', $cs->academicYear)
+                ->where('semester', $cs->semester)
+                ->where('subject_id', $cs->subject_id)
+                ->value('lec');
+            $cs->lec = $lec;
+            $lab = DB::table('curricula')
+                ->where('academicYear', $cs->academicYear)
+                ->where('semester', $cs->semester)
+                ->where('subject_id', $cs->subject_id)
+                ->value('lab');
+            $cs->lab = $lab;
     }
 
     if (empty($classschedules)) {
@@ -5383,15 +5390,10 @@ Route::get("/classschedules/classroom/{id}/{AY}/{sem}", function (Request $reque
                         ->join('classrooms', 'class_schedules.classroom_id', '=', 'classrooms.id')
                         ->join('schedules', 'class_schedules.schedule_id', '=', 'schedules.id')
                         ->join('courses', 'schedules.course_id', '=', 'courses.id')
-                        ->join('curricula', function ($join) use ($AY, $sem){
-                            $join->on('subjects.id', '=', 'curricula.subject_id')
-                            ->where('curricula.academicYear', $AY)
-                            ->where('curricula.semester', $sem);
-                        })
                         ->where('schedules.academicYear', $AY)
                         ->where('schedules.semester', $sem)
                         ->where('classrooms.id', '=', $id)
-                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.yearLevel', 'schedules.block', 'curricula.lec', 'curricula.lab')
+                        ->select('class_schedules.*', 'subjects.Subject_Code', 'subjects.Subject_Name', 'subjects.Subject_Type', 'faculties.Faculty_Name', 'faculties.Faculty_ID', 'classrooms.Building_No', 'classrooms.Classroom_No', 'courses.Course_Code', 'schedules.academicYear', 'schedules.semester', 'schedules.yearLevel', 'schedules.block')
                         ->get();
 
     foreach($classschedules as $cs)
@@ -5433,6 +5435,18 @@ Route::get("/classschedules/classroom/{id}/{AY}/{sem}", function (Request $reque
                 $cs->dayy = "Sunday";
                 break;
         }
+        $lec = DB::table('curricula')
+                ->where('academicYear', $cs->academicYear)
+                ->where('semester', $cs->semester)
+                ->where('subject_id', $cs->subject_id)
+                ->value('lec');
+            $cs->lec = $lec;
+            $lab = DB::table('curricula')
+                ->where('academicYear', $cs->academicYear)
+                ->where('semester', $cs->semester)
+                ->where('subject_id', $cs->subject_id)
+                ->value('lab');
+            $cs->lab = $lab;
     }
 
     if (empty($classschedules)) {
