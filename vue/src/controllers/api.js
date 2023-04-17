@@ -2058,6 +2058,22 @@ export default {
             });
         }
     },
+    FetchFacultyByClassSchedule: id => {
+        if (id != null) {
+            return fetch(API_BASE + "/classschedules-m-faculty/" + id)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    return data.response.classschedule;
+                } else {
+                    throw data.response.error;
+                }
+            })
+            .catch(err => {
+                alert(err)
+            });
+        }
+    },
     UpdateClassSchedule: (schedule_id = "", day = "", startTime = "", endTime = "", subject_id = "", faculty_id = "", classroom_id = "", id = "", AY = "", sem = "") => {
         if (
             schedule_id == "" ||
@@ -2132,7 +2148,7 @@ export default {
                 });
         }
     },
-    MergeClassSchedule: (schedule_id = "", schedule_id2 = "", day = "", startTime = "", endTime = "", subject_id = "", faculty_id = "", classroom_id = "", id = "", id2 = "", AY = "", sem = "") => {
+    MergeClassSchedule: (schedule_id = "", schedule_id2 = "", day = "", startTime = "", endTime = "", subject_id = "", faculty_id = "", classroom_id = "", id = "", id2 = "", AY = "", sem = "", changed = "") => {
         if (
             schedule_id == "" ||
             schedule_id2 == "" ||
@@ -2145,12 +2161,13 @@ export default {
             id == "" ||
             id2 == "" ||
             AY == "" ||
-            sem == ""
+            sem == "" ||
+            changed == ""
         ) {
             return false;
         }
 
-        return fetch(API_BASE + "/classschedules/merge/" + id + "/" + id2 + "/" + AY + "/" + sem, {
+        return fetch(API_BASE + "/classschedules/merge/" + id + "/" + id2 + "/" + AY + "/" + sem + "/" + changed, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"

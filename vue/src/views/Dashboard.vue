@@ -818,7 +818,7 @@
                 </div>
                 <div v-if="showModalAdd" class="opacity-25 fixed inset-0 z-40 bg-slate-500"></div>
                
-                <div v-if="(classscheduleID != false)" class="mt-2 fixed right-14 top-1/4 col-span-4 flex justify-end items-center z-50 outline-none focus:outline-none">
+                <div v-if="(classscheduleID != false)" class="mt-2 fixed right-14 top-1/4 col-span-4 flex justify-end items-center z-40 outline-none focus:outline-none">
                     <div class="w-auto mx-auto max-w-max">
                         <div class="w-max border-0 rounded-lg shadow-lg bg-white outline-none focus:outline-none">
                             <div class="flex items-center justify-between rounded-t -mb-6">
@@ -886,7 +886,6 @@
                                     <div class="col-span-4">
                                         <select
                                                 v-model="model3Edit.subject_id"
-                                                @change="fetchFaculties(onChangeSubject($event)), fetchClassrooms(onChangeSubject($event))"
                                                 disabled
                                                 v-bind:class="`${model3Edit.session == 'Lecture' ? 'bg-[#45c2fc]/[0.85]' : 'bg-[#97deff]/[0.50]'}`"
                                                 class="mt-0.5 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-max w-full text-[#16244D] font-bold border-2 border-sky-600 rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
@@ -1022,14 +1021,14 @@
                                     </button>
                                     <button
                                         v-else
-                                        @click="mergeClassSchedule(), mcs = false"
+                                        @click="toggleModalMerge(), mcs = false"
                                         class="cursor-pointer col-span-2 w-full text-xs border border-transparent shadow-sm font-semibold uppercase tracking-wider rounded-lg text-white bg-[#f97316] opacity-80 hover:bg-orange-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#f8bb82]">
                                         Merge Class to
                                     </button>
                                     <select
                                                 v-model="mcs$.mergeClass.$model"
                                                 required
-                                                @change="mcs=true"
+                                                @change="fetchFacultyByClassSchedule(onChangeFacultyMerge($event)), mcs=true"
                                                 class="cursor-pointer col-span-4 ml-2 w-full px-1 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-auto text-sky-600 border-1 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                     >
                                         <option disabled value="" class="text-center">Select a Class Schedule</option>
@@ -1059,14 +1058,14 @@
                                     </button>
                                     <button
                                         v-else
-                                        @click="mergeClassSchedule(), mcs = false"
+                                        @click="toggleModalMerge(), mcs = false"
                                         class="cursor-pointer col-span-2 w-auto text-xs border border-transparent shadow-sm font-extrabold tracking-wider uppercase rounded-lg text-white bg-[#f97316] opacity-80 hover:bg-orange-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-[#f8bb82]">
                                         Merge Class to
                                     </button>
                                     <select
                                                 v-model="mcs$.mergeClass.$model"
                                                 required
-                                                @change="mcs=true"
+                                                @change="fetchFacultyByClassSchedule(onChangeFacultyMerge($event)), mcs=true"
                                                 class="cursor-pointer col-span-4 ml-2 w-full px-1 invalid:border-orange-500 invalid:text-orange-600 focus:invalid:border-orange-500 focus:invalid:ring-orange-500 h-auto text-sky-600 border-1 border-sky-500 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
                                     >
                                         <option disabled value="" class="text-center">Select a Class Schedule</option>
@@ -1084,7 +1083,7 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="(classscheduleID != false)" class="opacity-25 fixed inset-0 z-40 bg-slate-500"></div>
+                <div v-if="(classscheduleID != false)" class="opacity-25 fixed inset-0 z-30 bg-slate-500"></div>
                 <div v-if="showModalDeleteSched" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
                     <div class="relative w-auto mx-auto">
                         <!--content-->
@@ -1115,9 +1114,36 @@
                     </div>
                 </div>
                 <div v-if="showModalDeleteSched" class="opacity-25 fixed inset-0 z-40 bg-slate-800"></div>
-                <!-- <div class="col-span-4">
-                    <span class="sm:ml-6 lg:ml-10 text-xs font-medium font-sans text-zinc-700">Subjects: {{ details.noS1 }} / {{ details.noS }} || Units: {{ details.totU1 }} / {{ details.totU }} || Hrs/Wk: {{ details.totH1 }} / {{ details.totH }} </span>
-                </div> -->
+                <div v-if="showModalMerge" class="overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none justify-center items-center flex">
+                    <div class="relative w-auto mx-auto">
+                        <!--content-->
+                        <div class="border-0 rounded-lg shadow-lg relative bg-white flex flex-col w-full outline-none focus:outline-none">
+                            <!--header-->
+                            <div class="flex items-center justify-between pl-2 border-b border-solid border-slate-200 rounded-t">
+                                <span class="text-sm font-roboto text-[#253B80] uppercase">
+                                Merging of Schedules
+                                </span>
+                                <button class="pr-1 -mt-2 bg-transparent font-semibold outline-none focus:outline-none" v-on:click="toggleModalMerge(), mcs = true">
+                                <span class="bg-transparent text-gray-400 hover:text-gray-600 text-3xl outline-none focus:outline-none">
+                                    ×
+                                </span>
+                                </button>
+                            </div>
+                            <div class="my-2 flex items-center justify-center w-auto text-sm text-[#253B80] font-medium">
+                                <span class="px-10 text-center">Select a Faculty.</span>
+                            </div>
+                            <div class="mb-1 px-2 flex items-center justify-center gap-x-2 border-t border-solid border-slate-200 rounded-b">
+                                <button class="mt-1 text-[#253B80] bg-transparent border border-solid border-[#253B80] hover:bg-[#253B80] hover:text-white active:bg-[#253B80] font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="mergeClassSchedule(model3.faculty_id, 'changed')">
+                                {{ model3.Faculty_Name }}
+                                </button>
+                                <button class="mt-1 text-sky-500 bg-transparent border border-solid border-sky-500 hover:bg-sky-500 hover:text-white active:bg-sky-600 font-bold uppercase text-sm px-2 py-1 rounded outline-none focus:outline-none ease-linear transition-all duration-150" v-on:click="mergeClassSchedule(mergeFact.faculty_id, 'not')">
+                                {{ mergeFact.Faculty_Name }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="showModalMerge" class="opacity-25 fixed inset-0 z-40 bg-slate-800"></div>
 
                 <div class="col-span-4 border border-1 mt-3 shadow-md overflow-hidden sm:rounded-lg bg-white sm:px-3">
                     <div class="flex flex-col items-start h-auto gap-y-1">
@@ -1736,6 +1762,14 @@ export default {
             showModalDeleteSched.value = !showModalDeleteSched.value;
         }
 
+        const showModalMerge = ref(false);
+        const toggleModalMerge = () => {
+            if(model3.value.faculty_id != mergeFact.value.faculty_id)
+                showModalMerge.value = !showModalMerge.value;
+            else
+                mergeClassSchedule(mergeFact.value.faculty_id, 'not');
+        }
+
         const showModalEditMode = ref(false);
         const toggleModalEditMode = () => {
             showModalEditMode.value = !showModalEditMode.value;
@@ -2112,6 +2146,8 @@ export default {
         const initialMCS = {
             mergeClass: '',
         }
+
+        const mergeFact = ref({});
 
         const mergeClass = ref({...initialMCS});
         const rulesMCS = computed(() => {
@@ -3295,16 +3331,20 @@ export default {
             }
         }
 
-        const mergeClassSchedule = async () => {
+        const fetchFacultyByClassSchedule = async (cs_id) => {
+            mergeFact.value = await APIController.FetchFacultyByClassSchedule(cs_id);
+        }
+
+        const mergeClassSchedule = async (faculty, changed) => {
             merge1.value = await APIController.FetchClassScheduleM(classscheduleID.value);
             merge2.value = await APIController.FetchClassScheduleM(mergeClass.value.mergeClass);
- 
-            let tempClassSchedule = await APIController.MergeClassSchedule(merge1.value.schedule_id, merge2.value.schedule_id, merge2.value.day, merge2.value.startTime, merge2.value.endTime, merge2.value.subject_id, merge2.value.faculty_id, merge2.value.classroom_id, classscheduleID.value, mergeClass.value.mergeClass, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester);
+            let tempClassSchedule = await APIController.MergeClassSchedule(merge1.value.schedule_id, merge2.value.schedule_id, merge2.value.day, merge2.value.startTime, merge2.value.endTime, merge2.value.subject_id, faculty, merge2.value.classroom_id, classscheduleID.value, mergeClass.value.mergeClass, modelHeader.value.selectedAcademicYear, modelHeader.value.selectedSemester, changed);
                 if(tempClassSchedule){
                     fetchCurricula();
                     fetchCurriculaStatus();
                     fetchClassSchedules();
                     classscheduleID.value = false;
+                    showModalMerge.value = false;
                     cancel();
                     resetM();
                 }
@@ -3640,6 +3680,8 @@ export default {
             clickSubj,
             mcs,
             mcs$,
+            mergeFact,
+            fetchFacultyByClassSchedule,
             mergeClass,
             mergeClassSchedule,
             merge1,
@@ -3690,7 +3732,8 @@ export default {
             toggleAYSem,
             showModalDeleteSched,
             toggleModalDeleteSched,
-
+            showModalMerge,
+            toggleModalMerge,
             showModalPrintClass,
             toggleModalPrintClass,
             showModalClassScheduleREG,
@@ -3779,6 +3822,9 @@ export default {
             return e.target.value;
         },
         onChangeYearLevel(e){
+            return e.target.value;
+        },
+        onChangeFacultyMerge(e){
             return e.target.value;
         },
     },
